@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eternal Empire - High Command Archive</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&family=Space+Mono&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}:root{--imperial-black:#0a0a0f;--imperial-dark:#121218;--imperial-gold:#d4af37;--imperial-amber:#ffb627;--imperial-blue:#4a9eff;--imperial-silver:#c0c0c0;--imperial-steel:#8a8a8a;--text-primary:#e8e8f0;--text-secondary:#a0a0b8;--color-leadership:#d4af37;--color-military:#ff5555;--color-administrative:#a78bfa;--color-trophy:#ff8c00;--color-alert:#fff;--current-primary:var(--imperial-gold);--current-secondary:var(--imperial-amber)}
+
+/* CUSTOM SCROLLBAR */
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:rgba(10,10,15,.8);border-radius:10px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--current-primary),rgba(var(--current-primary-rgb),.5));border-radius:10px;border:2px solid rgba(10,10,15,.8);box-shadow:0 0 10px var(--current-primary)}
+::-webkit-scrollbar-thumb:hover{background:var(--current-primary);box-shadow:0 0 20px var(--current-primary)}
+*{scrollbar-width:thin;scrollbar-color:var(--current-primary) rgba(10,10,15,.8)}
+
+body{font-family:Rajdhani,sans-serif;background:var(--imperial-black);color:var(--text-primary);overflow-x:hidden;position:relative}
+
+/* PARTICLE EFFECTS */
+.background-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.stars{background:radial-gradient(2px 2px at 20% 30%,white,transparent),radial-gradient(2px 2px at 60% 70%,white,transparent);background-size:200% 200%;opacity:.3;animation:starsMove 120s linear infinite}
+@keyframes starsMove{0%{background-position:0 0}100%{background-position:100% 100%}}
+.grid-overlay{background:linear-gradient(90deg,rgba(212,175,55,.03) 1px,transparent 1px),linear-gradient(rgba(212,175,55,.03) 1px,transparent 1px);background-size:50px 50px;opacity:.4}
+.scanline{position:absolute;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--imperial-gold),transparent);opacity:.2;animation:scan 8s linear infinite}
+@keyframes scan{0%,100%{top:0}50%{top:100%}}
+
+/* PARTICLES CANVAS */
+#particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.6}
+
+.container{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:40px 20px 120px}
+
+/* FACTION TRANSITION OVERLAY */
+.faction-transition{position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle,var(--current-primary),transparent);opacity:0;z-index:9999;pointer-events:none;transition:opacity .5s}
+.faction-transition.active{opacity:.3;animation:warpPulse .5s ease-out}
+@keyframes warpPulse{0%{transform:scale(0);opacity:0}50%{opacity:.5}100%{transform:scale(3);opacity:0}}
+
+.archive-header{text-align:center;margin-bottom:40px;padding:60px 20px 20px;position:relative}
+.archive-header::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:300px;height:3px;background:linear-gradient(90deg,transparent,var(--current-primary),transparent);box-shadow:0 0 20px var(--current-primary);transition:all .5s}
+.archive-title{font-family:Orbitron,sans-serif;font-size:4rem;font-weight:900;background:linear-gradient(135deg,var(--current-primary) 0%,var(--current-secondary) 50%,var(--current-primary) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:8px;margin-bottom:20px;text-transform:uppercase;animation:titleGlow 3s ease-in-out infinite alternate;transition:all .5s}
+@keyframes titleGlow{from{filter:drop-shadow(0 0 10px rgba(212,175,55,.5))}to{filter:drop-shadow(0 0 30px rgba(212,175,55,.8))}}
+.archive-subtitle{font-size:1.3rem;color:var(--text-secondary);letter-spacing:4px;text-transform:uppercase}
+
+.faction-selector{display:flex;gap:20px;justify-content:center;margin-bottom:40px;perspective:1000px}
+.faction-btn{font-family:Orbitron,sans-serif;padding:15px 40px;background:rgba(18,18,24,.8);border:2px solid rgba(212,175,55,.3);color:var(--text-secondary);border-radius:8px;cursor:pointer;font-weight:700;letter-spacing:3px;text-transform:uppercase;transition:all .3s;font-size:1rem;position:relative}
+.faction-btn.empire{border-color:var(--imperial-gold)}
+.faction-btn.fleet{border-color:var(--imperial-silver)}
+.faction-btn.empire.active{background:linear-gradient(135deg,rgba(212,175,55,.25),rgba(212,175,55,.15));border-color:var(--imperial-gold);color:var(--imperial-gold);box-shadow:0 0 25px rgba(212,175,55,.4)}
+.faction-btn.fleet.active{background:linear-gradient(135deg,rgba(192,192,192,.25),rgba(192,192,192,.15));border-color:var(--imperial-silver);color:var(--imperial-silver);box-shadow:0 0 25px rgba(192,192,192,.4)}
+.faction-btn:hover{transform:translateY(-2px)}
+
+.nav-tabs{display:flex;gap:20px;justify-content:center;margin-bottom:40px;flex-wrap:wrap}
+.nav-tab{font-family:Orbitron,sans-serif;padding:12px 30px;background:rgba(18,18,24,.6);border:2px solid;border-color:var(--current-primary);color:var(--text-secondary);border-radius:8px;cursor:pointer;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:all .3s;font-size:.9rem;opacity:.6}
+.nav-tab.active,.nav-tab:hover{background:linear-gradient(135deg,rgba(var(--current-primary-rgb),.2),rgba(var(--current-primary-rgb),.1));border-color:var(--current-primary);color:var(--current-primary);box-shadow:0 0 20px var(--current-primary);opacity:1}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.era-section{margin-bottom:50px}
+.era-header{font-family:Orbitron,sans-serif;font-size:1.8rem;color:var(--current-primary);text-transform:uppercase;letter-spacing:4px;margin-bottom:30px;padding:20px;background:linear-gradient(135deg,rgba(var(--current-primary-rgb),.15),rgba(var(--current-primary-rgb),.05));border-left:4px solid var(--current-primary);border-radius:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.era-title{flex:1;min-width:200px}
+.era-edit-btns{display:none;gap:10px}
+.edit-mode .era-edit-btns{display:flex}
+.era-btn{padding:8px 16px;background:rgba(var(--current-primary-rgb),.2);border:2px solid var(--current-primary);color:var(--current-primary);border-radius:6px;cursor:pointer;font-family:Orbitron,sans-serif;font-size:.75rem;transition:all .3s}
+.era-btn:hover{background:var(--current-primary);color:var(--imperial-black)}
+.era-btn.delete{background:rgba(220,38,38,.2);border-color:#ff5555;color:#ff5555}
+.era-btn.delete:hover{background:#ff5555;color:var(--imperial-black)}
+.add-era-btn{display:none;margin:30px auto;padding:15px 40px;background:linear-gradient(135deg,rgba(74,158,255,.2),rgba(74,158,255,.1));border:2px solid var(--imperial-blue);color:var(--imperial-blue);border-radius:8px;cursor:pointer;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:2px;transition:all .3s}
+.edit-mode .add-era-btn{display:block}
+.add-era-btn:hover{background:var(--imperial-blue);color:var(--imperial-black)}
+
+.members-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;margin-bottom:40px}
+
+/* ENHANCED MEMBER CARDS */
+.member-card{background:linear-gradient(135deg,rgba(18,18,24,.9),rgba(18,18,24,.7));border:1px solid;border-color:var(--current-primary);opacity:.6;border-radius:12px;padding:25px;position:relative;overflow:hidden;transition:all .4s cubic-bezier(.4,0,.2,1);cursor:pointer;animation:cardEnter .6s ease-out backwards}
+
+/* CORNER DECORATIONS */
+.member-card::after{content:'';position:absolute;top:0;right:0;width:40px;height:40px;background:linear-gradient(135deg,transparent 50%,var(--current-primary) 50%);opacity:.2;clip-path:polygon(0 0,100% 0,100% 100%)}
+.member-card::before{content:'';position:absolute;bottom:0;left:0;width:40px;height:40px;background:linear-gradient(-45deg,transparent 50%,var(--current-primary) 50%);opacity:.2;clip-path:polygon(0 0,0 100%,100% 100%)}
+
+/* ANIMATED BORDER TRACE */
+.member-card{border-image:linear-gradient(var(--angle,0deg),var(--current-primary),transparent,transparent,transparent,var(--current-primary)) 1;animation:borderRotate 6s linear infinite,cardEnter .6s ease-out backwards}
+@keyframes borderRotate{0%{--angle:0deg}100%{--angle:360deg}}
+
+.member-card.retired{opacity:.5}
+@keyframes cardEnter{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+.member-card:hover{transform:translateY(-5px) scale(1.02);border-color:var(--current-primary);box-shadow:0 0 30px var(--current-primary),0 10px 40px rgba(0,0,0,.5),inset 0 0 20px rgba(var(--current-primary-rgb),.1);opacity:1}
+
+.member-rank{display:inline-block;font-family:Orbitron,sans-serif;font-size:.7rem;font-weight:700;color:var(--current-primary);background:rgba(var(--current-primary-rgb),.15);padding:5px 12px;border-radius:20px;border:1px solid var(--current-primary);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;transition:all .3s;box-shadow:0 0 10px var(--current-primary)}
+.member-name{font-family:Orbitron,sans-serif;font-size:1.5rem;font-weight:700;color:var(--text-primary);margin-bottom:10px;letter-spacing:2px;transition:all .3s}
+.member-card:hover .member-name{color:var(--current-primary);text-shadow:0 0 20px var(--current-primary);transform:translateX(5px)}
+.member-title{font-size:.95rem;color:var(--current-secondary);margin-bottom:10px;letter-spacing:1px}
+
+/* BETTER IMAGE EFFECTS */
+.image-container{position:relative;width:100%;margin-bottom:15px;overflow:hidden;border-radius:8px}
+.member-image-small{width:100%;height:150px;object-fit:cover;border-radius:8px;border:1px solid var(--current-primary);transition:all .5s;filter:brightness(.9) contrast(1.1)}
+
+/* CHROMATIC ABERRATION & HEXAGONAL FRAME */
+.member-card:hover .member-image-small{filter:brightness(1) contrast(1.2);transform:scale(1.05);box-shadow:0 0 20px var(--current-primary),-2px 0 0 rgba(255,0,0,.3),2px 0 0 rgba(0,255,255,.3)}
+
+/* HOLOGRAPHIC SCANLINES ON IMAGE */
+.image-container::after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(var(--current-primary-rgb),.05) 2px,rgba(var(--current-primary-rgb),.05) 4px);pointer-events:none;animation:scanlineMove 3s linear infinite}
+@keyframes scanlineMove{0%{transform:translateY(0)}100%{transform:translateY(10px)}}
+
+.member-card.retired .member-image-small{filter:brightness(.4) grayscale(.5)}
+.image-placeholder-small{width:100%;height:150px;background:linear-gradient(135deg,rgba(var(--current-primary-rgb),.1),rgba(74,158,255,.1));border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-family:Orbitron,sans-serif;letter-spacing:2px;border:1px solid var(--current-primary);font-size:.8rem}
+.retired-badge-small{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:Orbitron,sans-serif;font-size:1.5rem;font-weight:900;color:var(--current-primary);text-shadow:0 0 10px var(--current-primary),0 0 20px var(--current-primary);letter-spacing:4px;z-index:10;animation:retiredGlow 2s ease-in-out infinite alternate;pointer-events:none}
+@keyframes retiredGlow{from{text-shadow:0 0 10px var(--current-primary),0 0 20px var(--current-primary)}to{text-shadow:0 0 20px var(--current-primary),0 0 30px var(--current-primary)}}
+
+/* CHAMPION TITLES - SPECIAL STYLING */
+.champion-badge{position:absolute;top:10px;left:10px;padding:6px 12px;background:linear-gradient(135deg,rgba(255,215,0,.3),rgba(255,165,0,.3));border:2px solid #ffd700;border-radius:6px;font-family:Orbitron,sans-serif;font-size:.65rem;font-weight:900;color:#ffd700;text-transform:uppercase;letter-spacing:1px;text-shadow:0 0 10px #ffd700;box-shadow:0 0 15px rgba(255,215,0,.5),inset 0 0 10px rgba(255,215,0,.2);animation:championPulse 2s ease-in-out infinite;z-index:15}
+@keyframes championPulse{0%,100%{box-shadow:0 0 15px rgba(255,215,0,.5),inset 0 0 10px rgba(255,215,0,.2)}50%{box-shadow:0 0 25px rgba(255,215,0,.8),inset 0 0 15px rgba(255,215,0,.4)}}
+
+.era-select,.faction-select{display:none;margin-bottom:10px}
+.edit-mode .era-select,.edit-mode .faction-select{display:block}
+.era-select select,.faction-select select{width:100%;padding:8px;background:rgba(0,0,0,.5);border:2px solid var(--current-primary);border-radius:6px;color:var(--text-primary);font-family:Rajdhani,sans-serif;cursor:pointer}
+
+.audio-log-section{display:none;margin-top:15px;padding:15px;background:rgba(0,0,0,.3);border:1px solid var(--current-primary);border-radius:8px}
+.edit-mode .audio-log-section{display:block}
+.add-audio-btn{display:flex;align-items:center;gap:10px;padding:10px 20px;background:linear-gradient(135deg,rgba(var(--current-primary-rgb),.3),rgba(var(--current-primary-rgb),.2));border:2px solid var(--current-primary);border-radius:6px;color:var(--current-primary);font-family:Orbitron,sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .3s;text-transform:uppercase;letter-spacing:1px;width:100%;justify-content:center;border:none}
+.add-audio-btn:hover{background:var(--current-primary);color:var(--imperial-black);box-shadow:0 0 20px var(--current-primary);transform:translateY(-2px)}
+.add-audio-btn::before{content:'🔊';font-size:1.2rem}
+.audio-player-wrapper{margin-top:10px;padding:10px;background:rgba(var(--current-primary-rgb),.1);border-radius:6px}
+.audio-player-wrapper audio{width:100%;border-radius:6px;outline:none}
+.delete-audio-btn{margin-top:10px;padding:6px 12px;background:rgba(220,38,38,.2);border:2px solid #ff5555;color:#ff5555;border-radius:4px;cursor:pointer;font-family:Orbitron,sans-serif;font-size:.7rem;transition:all .3s;border:none;width:100%}
+.delete-audio-btn:hover{background:#ff5555;color:var(--imperial-black)}
+
+/* ROLE MANAGEMENT SECTION */
+.roles-section{display:none;margin-top:15px;padding:15px;background:rgba(0,0,0,.3);border:1px solid var(--current-primary);border-radius:8px}
+.edit-mode .roles-section{display:block}
+.roles-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;min-height:40px;padding:10px;background:rgba(0,0,0,.3);border-radius:6px}
+.role-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;font-size:.8rem;font-weight:700;border:2px solid;cursor:pointer;transition:all .3s}
+.role-badge:hover{transform:translateY(-2px);box-shadow:0 0 15px currentColor}
+.role-remove{cursor:pointer;font-weight:900;opacity:.7}
+.role-remove:hover{opacity:1;transform:scale(1.2)}
+.add-role-btn{padding:8px 16px;background:rgba(var(--current-primary-rgb),.2);border:2px solid var(--current-primary);color:var(--current-primary);border-radius:6px;cursor:pointer;font-family:Orbitron,sans-serif;font-size:.75rem;transition:all .3s;width:100%}
+.add-role-btn:hover{background:var(--current-primary);color:var(--imperial-black)}
+
+.detail-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:2000;align-items:center;justify-content:center;animation:fadeIn .3s ease-out}
+.detail-modal.active{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.detail-content{background:linear-gradient(135deg,var(--imperial-dark),rgba(18,18,24,.98));border:2px solid var(--current-primary);border-radius:12px;width:90%;max-width:1200px;max-height:85vh;overflow:hidden;box-shadow:0 0 60px var(--current-primary);animation:slideIn .4s ease-out;display:flex;position:relative}
+@keyframes slideIn{from{opacity:0;transform:translateY(-50px)}to{opacity:1;transform:translateY(0)}}
+.detail-left{flex:1;padding:40px;border-right:1px solid var(--current-primary);overflow-y:auto;max-height:85vh}
+.detail-right{flex:1;padding:40px;overflow-y:auto;max-height:85vh;background:rgba(0,0,0,.3)}
+.detail-close{position:absolute;top:15px;right:15px;width:40px;height:40px;background:rgba(220,38,38,.2);border:2px solid #ff5555;border-radius:50%;color:#ff5555;font-size:1.5rem;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;z-index:10}
+.detail-close:hover{background:#ff5555;color:var(--imperial-black);transform:rotate(90deg)}
+.detail-image{width:100%;height:300px;object-fit:cover;border-radius:8px;border:2px solid var(--current-primary);margin-bottom:25px;box-shadow:0 0 30px var(--current-primary)}
+.detail-image-placeholder{width:100%;height:300px;background:linear-gradient(135deg,rgba(var(--current-primary-rgb),.15),rgba(74,158,255,.15));border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-family:Orbitron,sans-serif;letter-spacing:3px;border:2px solid var(--current-primary);margin-bottom:25px;font-size:1.2rem}
+.retired .detail-image,.retired .detail-image-placeholder{filter:brightness(.4);position:relative}
+.retired-badge-detail{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:Orbitron,sans-serif;font-size:3rem;font-weight:900;color:var(--current-primary);text-shadow:0 0 20px var(--current-primary),0 0 30px var(--current-primary);letter-spacing:10px;z-index:10;animation:retiredGlow 2s ease-in-out infinite alternate}
+.detail-rank{display:inline-block;font-family:Orbitron,sans-serif;font-size:.85rem;font-weight:700;color:var(--current-primary);background:rgba(var(--current-primary-rgb),.2);padding:8px 18px;border-radius:25px;border:2px solid var(--current-primary);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;box-shadow:0 0 15px var(--current-primary)}
+.detail-name{font-family:Orbitron,sans-serif;font-size:2.5rem;font-weight:900;color:var(--current-primary);margin-bottom:15px;letter-spacing:4px;text-shadow:0 0 20px var(--current-primary)}
+.detail-title{font-size:1.3rem;color:var(--current-secondary);margin-bottom:15px;letter-spacing:2px}
+.detail-tenure{font-size:1.1rem;color:var(--text-secondary);margin-bottom:30px;font-style:italic}
+
+.detail-roles-section{margin-top:30px}
+.detail-section-header{font-family:Orbitron,sans-serif;font-size:1rem;color:var(--current-primary);text-transform:uppercase;letter-spacing:3px;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid var(--current-primary)}
+.detail-roles-list{display:flex;flex-wrap:wrap;gap:10px}
+.detail-role-badge{font-size:.9rem;padding:8px 15px;border-radius:6px;transition:all .3s;position:relative;border:2px solid}
+
+/* CHAMPION TITLES IN DETAIL VIEW */
+.detail-role-badge.champion{background:linear-gradient(135deg,rgba(255,215,0,.3),rgba(255,165,0,.2));border:2px solid #ffd700;color:#ffd700;font-weight:900;text-shadow:0 0 10px #ffd700;box-shadow:0 0 20px rgba(255,215,0,.5);animation:championShine 3s ease-in-out infinite}
+@keyframes championShine{0%,100%{box-shadow:0 0 20px rgba(255,215,0,.5)}50%{box-shadow:0 0 30px rgba(255,215,0,.8),0 0 40px rgba(255,215,0,.3)}}
+
+.detail-audio-section{margin-top:30px;padding:20px;background:rgba(0,0,0,.3);border:2px solid var(--current-primary);border-radius:8px}
+.detail-audio-header{font-family:Orbitron,sans-serif;font-size:1rem;color:var(--current-primary);text-transform:uppercase;letter-spacing:3px;margin-bottom:15px;display:flex;align-items:center;gap:10px}
+.detail-audio-header::before{content:'🔊';font-size:1.3rem}
+.play-audio-btn{display:flex;align-items:center;gap:10px;padding:12px 25px;background:linear-gradient(135deg,rgba(var(--current-primary-rgb),.3),rgba(var(--current-primary-rgb),.2));border:2px solid var(--current-primary);border-radius:6px;color:var(--current-primary);font-family:Orbitron,sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .3s;text-transform:uppercase;letter-spacing:1px;width:100%;justify-content:center;border:none}
+.play-audio-btn:hover{background:var(--current-primary);color:var(--imperial-black);box-shadow:0 0 25px var(--current-primary);transform:translateY(-2px)}
+.play-audio-btn::before{content:'▶';font-size:1.1rem}
+.play-audio-btn.playing::before{content:'⏹'}
+.audio-player-container{margin-top:15px;padding:15px;background:rgba(var(--current-primary-rgb),.1);border-radius:6px;display:none}
+.audio-player-container.active{display:block}
+.audio-player-container audio{width:100%;outline:none;border-radius:6px}
+
+.bio-header{font-family:Orbitron,sans-serif;font-size:2rem;color:var(--current-primary);text-transform:uppercase;letter-spacing:6px;margin-bottom:30px;text-align:center;border-bottom:2px solid var(--current-primary);padding-bottom:15px}
+.bio-text{font-family:'Space Mono',monospace;font-size:1.05rem;line-height:1.8;color:var(--text-primary);white-space:pre-wrap}
+.bio-text::after{content:'▮';animation:blink 1s infinite;margin-left:2px}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+/* GLOWING CONNECTION LINES IN HIERARCHY */
+.org-chart{padding:40px 20px;overflow-x:auto}
+.chart-container{min-width:800px;display:flex;flex-direction:column;align-items:center;gap:40px}
+.chart-level{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;position:relative}
+.chart-node{background:linear-gradient(135deg,rgba(18,18,24,.95),rgba(18,18,24,.85));border:2px solid var(--current-primary);border-radius:10px;padding:20px;min-width:200px;text-align:center;position:relative;cursor:pointer;transition:all .3s;box-shadow:0 0 20px var(--current-primary)}
+.chart-node:hover{transform:translateY(-5px);box-shadow:0 0 40px var(--current-primary);border-color:var(--current-secondary)}
+.chart-node.emperor,.chart-node.fleet-commander{border-width:3px;box-shadow:0 0 30px var(--current-primary)}
+.chart-rank-badge{font-family:Orbitron,sans-serif;font-size:.7rem;color:var(--current-primary);background:rgba(var(--current-primary-rgb),.15);padding:4px 10px;border-radius:15px;border:1px solid var(--current-primary);margin-bottom:10px;display:inline-block}
+.chart-name{font-family:Orbitron,sans-serif;font-size:1.1rem;font-weight:700;color:var(--text-primary);margin-bottom:5px}
+.chart-title{font-size:.85rem;color:var(--current-secondary)}
+
+/* ANIMATED GLOWING CONNECTION LINES */
+.chart-line{position:absolute;width:3px;background:linear-gradient(180deg,var(--current-primary),transparent);height:40px;top:-40px;left:50%;transform:translateX(-50%);box-shadow:0 0 10px var(--current-primary);animation:energyFlow 2s ease-in-out infinite}
+@keyframes energyFlow{0%,100%{box-shadow:0 0 10px var(--current-primary),0 0 20px var(--current-primary)}50%{box-shadow:0 0 20px var(--current-primary),0 0 30px var(--current-primary),0 0 40px var(--current-primary)}}
+
+/* ENERGY PULSE DOTS */
+.chart-line::after{content:'';position:absolute;width:8px;height:8px;background:var(--current-primary);border-radius:50%;left:50%;transform:translateX(-50%);top:0;box-shadow:0 0 15px var(--current-primary);animation:pulseMove 2s linear infinite}
+@keyframes pulseMove{0%{top:0;opacity:1}100%{top:100%;opacity:0}}
+
+.hierarchy-edit-controls{display:none;margin:20px 0;text-align:center;gap:15px;justify-content:center;flex-wrap:wrap}
+.edit-mode .hierarchy-edit-controls{display:flex}
+.hierarchy-btn{padding:10px 25px;background:rgba(var(--current-primary-rgb),.2);border:2px solid var(--current-primary);color:var(--current-primary);border-radius:6px;cursor:pointer;font-family:Orbitron,sans-serif;font-size:.8rem;transition:all .3s}
+.hierarchy-btn:hover{background:var(--current-primary);color:var(--imperial-black)}
+
+.timeline-container{padding:40px 20px}
+.timeline{position:relative;padding:40px 0}
+.timeline::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--current-primary),rgba(var(--current-primary-rgb),.3));box-shadow:0 0 10px var(--current-primary)}
+.timeline-item{position:relative;margin-bottom:60px;display:flex;justify-content:center}
+.timeline-content{background:linear-gradient(135deg,rgba(18,18,24,.95),rgba(18,18,24,.85));border:2px solid var(--current-primary);border-radius:10px;padding:25px;width:45%;position:relative;box-shadow:0 0 20px var(--current-primary);cursor:pointer;transition:all .3s}
+.timeline-content:hover{transform:translateX(-10px);box-shadow:0 0 40px var(--current-primary)}
+.timeline-item:nth-child(even) .timeline-content{margin-left:auto}
+.timeline-item:nth-child(even) .timeline-content:hover{transform:translateX(10px)}
+.timeline-dot{position:absolute;left:50%;top:20px;transform:translateX(-50%);width:20px;height:20px;background:var(--current-primary);border:4px solid var(--imperial-dark);border-radius:50%;box-shadow:0 0 20px var(--current-primary);z-index:10}
+.timeline-date{font-family:Orbitron,sans-serif;font-size:.85rem;color:var(--current-primary);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+.timeline-event-title{font-family:Orbitron,sans-serif;font-size:1.2rem;font-weight:700;color:var(--text-primary);margin-bottom:8px}
+.timeline-event-desc{font-size:.95rem;color:var(--text-secondary);line-height:1.6}
+.timeline-edit-btns{display:none;gap:10px;margin-top:15px}
+.edit-mode .timeline-edit-btns{display:flex}
+.timeline-btn{padding:6px 12px;background:rgba(var(--current-primary-rgb),.2);border:2px solid var(--current-primary);color:var(--current-primary);border-radius:6px;cursor:pointer;font-family:Orbitron,sans-serif;font-size:.7rem;transition:all .3s}
+.timeline-btn:hover{background:var(--current-primary);color:var(--imperial-black)}
+.timeline-btn.delete{background:rgba(220,38,38,.2);border-color:#ff5555;color:#ff5555}
+.timeline-btn.delete:hover{background:#ff5555;color:var(--imperial-black)}
+.add-timeline-btn{display:none;margin:30px auto;padding:15px 40px;background:linear-gradient(135deg,rgba(74,158,255,.2),rgba(74,158,255,.1));border:2px solid var(--imperial-blue);color:var(--imperial-blue);border-radius:8px;cursor:pointer;font-family:Orbitron,sans-serif;font-weight:700;letter-spacing:2px;transition:all .3s}
+.edit-mode .add-timeline-btn{display:block}
+.add-timeline-btn:hover{background:var(--imperial-blue);color:var(--imperial-black)}
+
+.edit-controls{position:fixed;bottom:30px;right:30px;display:flex;gap:15px;z-index:50;flex-direction:column;align-items:flex-end}
+.edit-btn,.save-btn,.add-member-btn,.settings-btn{font-family:Orbitron,sans-serif;padding:15px 30px;background:linear-gradient(135deg,var(--imperial-dark),rgba(18,18,24,.95));border:2px solid var(--current-primary);color:var(--current-primary);border-radius:8px;cursor:pointer;font-weight:700;letter-spacing:2px;text-transform:uppercase;transition:all .3s;box-shadow:0 0 20px var(--current-primary)}
+.edit-btn:hover,.save-btn:hover,.add-member-btn:hover,.settings-btn:hover{background:var(--current-primary);color:var(--imperial-black);box-shadow:0 0 40px var(--current-primary);transform:translateY(-2px)}
+.save-btn{background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(34,197,94,.1));border-color:#4ade80;color:#4ade80}
+.save-btn:hover{background:#4ade80;color:var(--imperial-black)}
+.add-member-btn{background:linear-gradient(135deg,rgba(74,158,255,.2),rgba(74,158,255,.1));border-color:var(--imperial-blue);color:var(--imperial-blue)}
+.add-member-btn:hover{background:var(--imperial-blue);color:var(--imperial-black)}
+.edit-mode .member-card{border:2px dashed var(--current-primary)}
+.editable-field{position:relative}
+.edit-mode .editable-field:hover::after{content:'✎';position:absolute;right:-25px;top:50%;transform:translateY(-50%);color:var(--current-primary);font-size:1.2rem}
+.image-upload-zone{display:none;margin-top:15px;padding:15px;border:2px dashed var(--current-primary);border-radius:8px;text-align:center;cursor:pointer;transition:all .3s;font-size:.85rem}
+.edit-mode .image-upload-zone{display:block}
+.image-upload-zone:hover{background:rgba(var(--current-primary-rgb),.1)}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.password-modal,.settings-modal,.edit-era-modal,.edit-timeline-modal,.edit-hierarchy-modal,.edit-role-modal{background:linear-gradient(135deg,var(--imperial-dark),rgba(18,18,24,.95));border:2px solid var(--current-primary);border-radius:12px;padding:40px;max-width:500px;width:90%;text-align:center;box-shadow:0 0 50px var(--current-primary);animation:modalEnter .3s ease-out;max-height:80vh;overflow-y:auto}
+.settings-modal{max-width:700px}
+@keyframes modalEnter{from{opacity:0;transform:translateY(-50px)}to{opacity:1;transform:translateY(0)}}
+.password-modal h2,.settings-modal h2,.edit-era-modal h2,.edit-timeline-modal h2,.edit-hierarchy-modal h2,.edit-role-modal h2{font-family:Orbitron,sans-serif;color:var(--current-primary);margin-bottom:20px;letter-spacing:3px}
+.password-modal input,.edit-era-modal input,.edit-timeline-modal input,.edit-timeline-modal textarea,.edit-hierarchy-modal input,.edit-hierarchy-modal select,.edit-role-modal input{width:100%;padding:15px;background:rgba(0,0,0,.5);border:2px solid var(--current-primary);border-radius:8px;color:var(--text-primary);font-family:Rajdhani,sans-serif;font-size:1.1rem;margin-bottom:15px}
+.edit-timeline-modal textarea{min-height:100px;resize:vertical}
+.modal-buttons{display:flex;gap:15px;justify-content:center;margin-top:20px}
+.modal-btn{padding:12px 30px;background:var(--current-primary);border:none;border-radius:6px;color:var(--imperial-black);font-family:Orbitron,sans-serif;font-weight:700;cursor:pointer;transition:all .3s}
+.modal-btn.cancel{background:rgba(255,255,255,.1);color:var(--text-primary)}
+.error-message{color:#ff5555;margin-top:10px;font-size:.9rem;min-height:20px}
+.color-settings{text-align:left;margin-bottom:20px}
+.color-setting-item{margin-bottom:15px;display:flex;align-items:center;justify-content:space-between}
+.color-setting-item input[type=color]{width:60px;height:40px;border:2px solid var(--current-primary);border-radius:6px;cursor:pointer}
+
+/* ROLE LIST IN SETTINGS */
+.role-list{margin-top:20px}
+.role-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(var(--current-primary-rgb),.1);border:1px solid var(--current-primary);border-radius:6px;margin-bottom:10px}
+.role-info{display:flex;align-items:center;gap:15px;flex:1}
+.role-color-preview{width:30px;height:30px;border-radius:6px;border:2px solid var(--current-primary)}
+.role-actions{display:flex;gap:8px}
+.role-action-btn{padding:6px 12px;background:rgba(var(--current-primary-rgb),.2);border:2px solid var(--current-primary);color:var(--current-primary);border-radius:4px;cursor:pointer;font-size:.75rem;transition:all .3s}
+.role-action-btn:hover{background:var(--current-primary);color:var(--imperial-black)}
+.role-action-btn.delete{background:rgba(220,38,38,.2);border-color:#ff5555;color:#ff5555}
+.role-action-btn.delete:hover{background:#ff5555;color:var(--imperial-black)}
+.add-role-section-btn{width:100%;padding:12px;background:linear-gradient(135deg,rgba(74,158,255,.2),rgba(74,158,255,.1));border:2px solid var(--imperial-blue);color:var(--imperial-blue);border-radius:6px;cursor:pointer;font-family:Orbitron,sans-serif;font-weight:700;transition:all .3s;margin-top:15px}
+.add-role-section-btn:hover{background:var(--imperial-blue);color:var(--imperial-black)}
+
+.status-controls{display:none;margin-bottom:15px}
+.edit-mode .status-controls{display:flex;gap:10px;align-items:center}
+.status-controls select{padding:8px 15px;background:rgba(0,0,0,.5);border:2px solid var(--current-primary);border-radius:6px;color:var(--text-primary);cursor:pointer}
+.delete-member-btn{display:none;position:absolute;top:10px;right:10px;padding:6px 12px;background:rgba(220,38,38,.2);border:2px solid #ff5555;border-radius:6px;color:#ff5555;font-family:Orbitron,sans-serif;font-size:.7rem;cursor:pointer;transition:all .3s;z-index:20}
+.edit-mode .delete-member-btn{display:block}
+.delete-member-btn:hover{background:#ff5555;color:var(--imperial-black)}
+.tenure-inputs{display:none;gap:10px;margin-bottom:15px}
+.edit-mode .tenure-inputs{display:flex}
+.tenure-inputs input{flex:1;padding:8px;background:rgba(0,0,0,.5);border:2px solid var(--current-primary);border-radius:6px;color:var(--text-primary);font-size:.9rem}
+
+/* LOADING ANIMATION */
+.loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--imperial-black);z-index:10000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:30px;transition:opacity .5s}
+.loading-overlay.hidden{opacity:0;pointer-events:none}
+.loading-spinner{width:80px;height:80px;border:4px solid rgba(var(--current-primary-rgb),.2);border-top:4px solid var(--current-primary);border-radius:50%;animation:spin 1s linear infinite;box-shadow:0 0 30px var(--current-primary)}
+@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.loading-text{font-family:Orbitron,sans-serif;font-size:1.2rem;color:var(--current-primary);letter-spacing:4px;text-transform:uppercase;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+@media (max-width:768px){.archive-title{font-size:2.5rem;letter-spacing:4px}.members-grid{grid-template-columns:1fr}.detail-content{flex-direction:column}.detail-left,.detail-right{border:none;max-height:none}.timeline-content{width:90%}.timeline::before{left:20px}.timeline-dot{left:20px}.edit-controls{bottom:15px;right:15px;gap:10px}.edit-btn,.save-btn,.add-member-btn,.settings-btn{padding:10px 20px;font-size:.8rem}}</style>
+</head>
+<body>
+<!-- LOADING SCREEN -->
+<div class="loading-overlay" id="loadingOverlay">
+<div class="loading-spinner"></div>
+<div class="loading-text">Accessing Archives...</div>
+</div>
+
+<!-- FACTION TRANSITION EFFECT -->
+<div class="faction-transition" id="factionTransition"></div>
+
+<!-- PARTICLES CANVAS -->
+<canvas id="particles"></canvas>
+
+<div class="background-layer stars"></div>
+<div class="background-layer grid-overlay"></div>
+<div class="scanline"></div>
+<div class="container">
+<header class="archive-header">
+<h1 class="archive-title" id="mainTitle">Eternal Empire</h1>
+<p class="archive-subtitle">High Command Archive</p>
+</header>
+
+<div class="faction-selector">
+<button class="faction-btn empire active" onclick="switchFaction('empire')">⚔️ ETERNAL EMPIRE</button>
+<button class="faction-btn fleet" onclick="switchFaction('fleet')">🚀 ETERNAL FLEET</button>
+</div>
+
+<div class="nav-tabs">
+<div class="nav-tab active" data-tab="archives">📁 Archives</div>
+<div class="nav-tab" data-tab="hierarchy">🏛️ Hierarchy Chart</div>
+<div class="nav-tab" data-tab="timeline">📜 Timeline</div>
+</div>
+
+<div class="tab-content active" id="archives">
+<div id="erasContainer"></div>
+<button class="add-era-btn" id="addEraBtn">➕ Add New Era</button>
+</div>
+
+<div class="tab-content" id="hierarchy">
+<div class="org-chart">
+<div class="hierarchy-edit-controls">
+<button class="hierarchy-btn" id="addHierarchyBtn">➕ Add Position</button>
+</div>
+<div class="chart-container" id="chartContainer"></div>
+</div>
+</div>
+
+<div class="tab-content" id="timeline">
+<div class="timeline-container">
+<div class="timeline" id="timelineContainer"></div>
+<button class="add-timeline-btn" id="addTimelineBtn">➕ Add Timeline Event</button>
+</div>
+</div>
+
+</div>
+
+<div class="detail-modal" id="detailModal">
+<div class="detail-content">
+<div class="detail-close" id="detailClose">×</div>
+<div class="detail-left" id="detailLeft"></div>
+<div class="detail-right">
+<div class="bio-header">BIOGRAPHY</div>
+<div class="bio-text" id="bioText"></div>
+</div>
+</div>
+</div>
+
+<div class="edit-controls">
+<button class="settings-btn" id="settingsBtn" style="display:none">⚙️ Settings</button>
+<button class="add-member-btn" id="addMemberBtn" style="display:none">➕ Add Archive</button>
+<button class="save-btn" id="saveBtn" style="display:none">💾 Save</button>
+<button class="edit-btn" id="editBtn">🔓 Edit Mode</button>
+</div>
+
+<div class="modal-overlay" id="passwordModal">
+<div class="password-modal">
+<h2>🔒 SECURITY CLEARANCE REQUIRED</h2>
+<p style="color:var(--text-secondary)">Enter authorization code</p>
+<input type="password" id="passwordInput" placeholder="Enter Password">
+<div class="error-message" id="errorMessage"></div>
+<div class="modal-buttons">
+<button class="modal-btn cancel" id="cancelBtn">Cancel</button>
+<button class="modal-btn" id="submitBtn">Authorize</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="settingsModal">
+<div class="settings-modal">
+<h2>⚙️ ARCHIVE SETTINGS</h2>
+
+<h3 style="color:var(--current-primary);margin-bottom:15px;font-family:Orbitron,sans-serif;text-align:left">Roles Management</h3>
+<div class="role-list" id="roleList"></div>
+<button class="add-role-section-btn" id="addNewRoleBtn">➕ Create New Role</button>
+
+<div class="modal-buttons" style="margin-top:30px">
+<button class="modal-btn cancel" id="settingsCloseBtn">Close</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="editRoleModal">
+<div class="edit-role-modal">
+<h2 id="roleModalTitle">➕ CREATE NEW ROLE</h2>
+<input type="text" id="roleNameInput" placeholder="Role Name (e.g., Prince, Champion of Zakuul)">
+<input type="color" id="roleColorInput" value="#d4af37" style="width:100%;height:60px;cursor:pointer">
+<div class="modal-buttons">
+<button class="modal-btn cancel" id="roleModalCancel">Cancel</button>
+<button class="modal-btn" id="roleModalSave">Save</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="editEraModal">
+<div class="edit-era-modal">
+<h2 id="eraModalTitle">➕ ADD NEW ERA</h2>
+<input type="text" id="eraNameInput" placeholder="Era Name (e.g., 2024-2025 Era)">
+<div class="modal-buttons">
+<button class="modal-btn cancel" id="eraModalCancel">Cancel</button>
+<button class="modal-btn" id="eraModalSave">Save</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="editTimelineModal">
+<div class="edit-timeline-modal">
+<h2 id="timelineModalTitle">➕ ADD TIMELINE EVENT</h2>
+<input type="text" id="timelineDateInput" placeholder="Date (e.g., January 2024)">
+<input type="text" id="timelineTitleInput" placeholder="Event Title">
+<textarea id="timelineDescInput" placeholder="Event Description"></textarea>
+<div class="modal-buttons">
+<button class="modal-btn cancel" id="timelineModalCancel">Cancel</button>
+<button class="modal-btn" id="timelineModalSave">Save</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="editHierarchyModal">
+<div class="edit-hierarchy-modal">
+<h2 id="hierarchyModalTitle">➕ ADD HIERARCHY POSITION</h2>
+<select id="hierarchyLevel">
+<option value="1">Top Level (Emperor/Commander)</option>
+<option value="2">Second Level (Princes/Captains)</option>
+<option value="3">Third Level (High Justice/Officers)</option>
+</select>
+<input type="text" id="hierarchyRank" placeholder="Rank (e.g., Prince)">
+<input type="text" id="hierarchyName" placeholder="Name">
+<input type="text" id="hierarchyTitle" placeholder="Title">
+<div class="modal-buttons">
+<button class="modal-btn cancel" id="hierarchyModalCancel">Cancel</button>
+<button class="modal-btn" id="hierarchyModalSave">Save</button>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="assignRolesModal">
+<div class="edit-role-modal">
+<h2>📋 ASSIGN ROLES</h2>
+<p style="color:var(--text-secondary);margin-bottom:20px">Select roles for <span id="assignMemberName" style="color:var(--current-primary)"></span></p>
+<div id="availableRolesList" style="text-align:left;max-height:400px;overflow-y:auto"></div>
+<div class="modal-buttons">
+<button class="modal-btn cancel" id="assignRolesCancel">Cancel</button>
+<button class="modal-btn" id="assignRolesSave">Save</button>
+</div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// PARTICLE SYSTEM
+const canvas=document.getElementById('particles');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+let particles=[];
+const particleCount=60;
+let currentColor='rgba(212,175,55';
+
+class Particle{
+constructor(){
+this.x=Math.random()*canvas.width;
+this.y=Math.random()*canvas.height;
+this.size=Math.random()*3+1;
+this.speedX=(Math.random()-.5)*.5;
+this.speedY=(Math.random()-.5)*.5;
+this.opacity=Math.random()*.5+.2;
+}
+update(){
+this.x+=this.speedX;
+this.y+=this.speedY;
+if(this.x>canvas.width)this.x=0;
+if(this.x<0)this.x=canvas.width;
+if(this.y>canvas.height)this.y=0;
+if(this.y<0)this.y=canvas.height;
+}
+draw(){
+ctx.fillStyle=`${currentColor},${this.opacity})`;
+ctx.beginPath();
+ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+ctx.fill();
+ctx.shadowBlur=15;
+ctx.shadowColor=`${currentColor},${this.opacity})`;
+}
+}
+
+function initParticles(){
+particles=[];
+for(let i=0;i<particleCount;i++){
+particles.push(new Particle());
+}
+}
+
+function animateParticles(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+particles.forEach(particle=>{
+particle.update();
+particle.draw();
+});
+requestAnimationFrame(animateParticles);
+}
+
+window.addEventListener('resize',()=>{
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+initParticles();
+});
+
+initParticles();
+animateParticles();
+
+// LOADING SCREEN
+window.addEventListener('load',()=>{
+setTimeout(()=>{
+document.getElementById('loadingOverlay').classList.add('hidden');
+},1500);
+});
+
+// REST OF JAVASCRIPT
+const PW='LEE';
+let currentFaction='empire';
+let editMode=false;
+let nextId=7;
+let nextEraId=3;
+let nextTimelineId=6;
+let nextRoleId=10;
+let editingEra=null;
+let editingTimeline=null;
+let editingRole=null;
+let currentAudioPlayer=null;
+let assigningRolesMember=null;
+
+// DEFAULT DATA STRUCTURE
+const defaultData={
+empire:{
+eras:[
+{id:1,name:'Current Era (2025-2026)',faction:'empire'},
+{id:2,name:'Previous Era (2024-2025)',faction:'empire'}
+],
+members:[
+{id:1,rank:'Emperor',name:'Tommy (Tomhitsu)',title:'The Eternal Emperor | 1IC',bio:'Tommy, also known as Tomhitsu, founded the Eternal Empire and became its first Emperor. Under his leadership, the Empire grew rapidly and established itself as a dominant force. His vision and strategic mind shaped the foundations of what the Empire stands for today.',tenureStart:'2023',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[1,2]},
+{id:2,rank:'Prince',name:'Arcann',title:'Prince of War | 2IC',bio:'Arcann serves as the Prince of War and Second-in-Command of the Eternal Empire. Known for his tactical brilliance and unwavering loyalty, he has led countless successful campaigns.',tenureStart:'2023',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[3,4,5]},
+{id:3,rank:'Prince',name:'Roku',title:'Prince of the Eternal Empire',bio:'Prince Roku oversees diplomatic affairs and internal governance. His wisdom and measured approach have helped maintain stability within the Empire.',tenureStart:'2024',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[3,6]},
+{id:4,rank:'High Justice',name:'Auren',title:'High Justice',bio:'High Justice Auren commands respect throughout the Empire for dedication to justice and order.',tenureStart:'2024',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[7,8]},
+{id:5,rank:'High Justice',name:'Amazed',title:'High Justice of Affairs',bio:'High Justice Amazed manages the Empire\'s administrative operations with precision and care.',tenureStart:'2024',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[7]},
+{id:6,rank:'High Justice',name:'Joei',title:'High Justice of Leadership',bio:'High Justice Joei provides strategic guidance and mentorship to Empire members.',tenureStart:'2024',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[7]}
+],
+timeline:[
+{id:1,date:'January 2023',title:'Empire Founded',description:'Tommy establishes the Eternal Empire and becomes its first Emperor.',faction:'empire'},
+{id:2,date:'March 2023',title:'Arcann Promoted',description:'Arcann is promoted to Prince of War and named Second-in-Command.',faction:'empire'}
+],
+hierarchy:[],
+roles:[
+{id:1,name:'Eternal Emperor',color:'#d4af37',faction:'empire'},
+{id:2,name:'Zakuulan',color:'#a78bfa',faction:'empire'},
+{id:3,name:'Prince',color:'#d4af37',faction:'empire'},
+{id:4,name:'War Organizer',color:'#ff5555',faction:'empire'},
+{id:5,name:'Champion of Zakuul',color:'#ffd700',faction:'empire'},
+{id:6,name:'Champion of Astra',color:'#ffd700',faction:'empire'},
+{id:7,name:'High Justice',color:'#d4af37',faction:'empire'},
+{id:8,name:'Champion of Vitara',color:'#ffd700',faction:'empire'}
+]
+},
+fleet:{
+eras:[{id:100,name:'Current Era (2025-2026)',faction:'fleet'}],
+members:[],
+timeline:[],
+hierarchy:[],
+roles:[
+{id:9,name:'Fleet Commander',color:'#c0c0c0',faction:'fleet'}
+]
+}
+};
+
+// Initialize with a deep copy
+let data=JSON.parse(JSON.stringify(defaultData));
+
+// HELPER FUNCTION TO ENSURE DATA STRUCTURE
+function ensureDataStructure(factionData){
+if(!factionData.roles)factionData.roles=[];
+if(!factionData.eras)factionData.eras=[];
+if(!factionData.members)factionData.members=[];
+if(!factionData.timeline)factionData.timeline=[];
+if(!factionData.hierarchy)factionData.hierarchy=[];
+// Ensure all members have roleIds
+factionData.members.forEach(m=>{
+if(!m.roleIds)m.roleIds=[];
+});
+}
+
+function isChampionRole(roleName){
+return roleName.toLowerCase().includes('champion');
+}
+
+function switchFaction(faction){
+if(faction===currentFaction)return;
+
+// TRANSITION EFFECT
+const transition=document.getElementById('factionTransition');
+transition.classList.add('active');
+setTimeout(()=>transition.classList.remove('active'),500);
+
+currentFaction=faction;
+document.querySelectorAll('.faction-btn').forEach(btn=>btn.classList.remove('active'));
+document.querySelector(`.faction-btn.${faction}`).classList.add('active');
+
+// UPDATE TITLE
+document.getElementById('mainTitle').textContent=faction==='empire'?'Eternal Empire':'Eternal Fleet';
+
+if(faction==='fleet'){
+document.documentElement.style.setProperty('--current-primary','var(--imperial-silver)');
+document.documentElement.style.setProperty('--current-secondary','#e0e0e0');
+document.documentElement.style.setProperty('--current-primary-rgb','192,192,192');
+currentColor='rgba(192,192,192';
+}else{
+document.documentElement.style.setProperty('--current-primary','var(--imperial-gold)');
+document.documentElement.style.setProperty('--current-secondary','var(--imperial-amber)');
+document.documentElement.style.setProperty('--current-primary-rgb','212,175,55');
+currentColor='rgba(212,175,55';
+}
+
+renderEras();
+renderTimeline();
+renderHierarchy();
+}
+
+document.querySelectorAll('.nav-tab').forEach(tab=>{
+tab.addEventListener('click',()=>{
+document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+tab.classList.add('active');
+document.getElementById(tab.dataset.tab).classList.add('active');
+if(tab.dataset.tab==='hierarchy')renderHierarchy();
+if(tab.dataset.tab==='timeline')renderTimeline();
+});
+});
+
+// ERA MANAGEMENT
+document.getElementById('addEraBtn').addEventListener('click',()=>{
+editingEra=null;
+document.getElementById('eraModalTitle').textContent='➕ ADD NEW ERA';
+document.getElementById('eraNameInput').value='';
+document.getElementById('editEraModal').classList.add('active');
+});
+
+document.getElementById('eraModalCancel').addEventListener('click',()=>{
+document.getElementById('editEraModal').classList.remove('active');
+});
+
+document.getElementById('eraModalSave').addEventListener('click',()=>{
+const name=document.getElementById('eraNameInput').value.trim();
+if(!name){alert('Please enter an era name');return}
+if(editingEra){
+editingEra.name=name;
+}else{
+data[currentFaction].eras.push({id:nextEraId++,name,faction:currentFaction});
+}
+document.getElementById('editEraModal').classList.remove('active');
+renderEras();
+saveAll();
+});
+
+window.editEra=function(eraId){
+const era=data[currentFaction].eras.find(e=>e.id===eraId);
+if(!era)return;
+editingEra=era;
+document.getElementById('eraModalTitle').textContent='✏️ EDIT ERA';
+document.getElementById('eraNameInput').value=era.name;
+document.getElementById('editEraModal').classList.add('active');
+}
+
+window.deleteEra=function(eraId){
+if(!confirm('Delete this era?'))return;
+data[currentFaction].eras=data[currentFaction].eras.filter(e=>e.id!==eraId);
+const newEraId=data[currentFaction].eras.length>0?data[currentFaction].eras[0].id:null;
+if(newEraId){
+data[currentFaction].members.forEach(m=>{if(m.eraId===eraId)m.eraId=newEraId});
+}
+renderEras();
+saveAll();
+}
+
+// TIMELINE MANAGEMENT
+document.getElementById('addTimelineBtn').addEventListener('click',()=>{
+editingTimeline=null;
+document.getElementById('timelineModalTitle').textContent='➕ ADD TIMELINE EVENT';
+document.getElementById('timelineDateInput').value='';
+document.getElementById('timelineTitleInput').value='';
+document.getElementById('timelineDescInput').value='';
+document.getElementById('editTimelineModal').classList.add('active');
+});
+
+document.getElementById('timelineModalCancel').addEventListener('click',()=>{
+document.getElementById('editTimelineModal').classList.remove('active');
+});
+
+document.getElementById('timelineModalSave').addEventListener('click',()=>{
+const date=document.getElementById('timelineDateInput').value.trim();
+const title=document.getElementById('timelineTitleInput').value.trim();
+const description=document.getElementById('timelineDescInput').value.trim();
+if(!date||!title||!description){alert('Please fill all fields');return}
+if(editingTimeline){
+editingTimeline.date=date;
+editingTimeline.title=title;
+editingTimeline.description=description;
+}else{
+data[currentFaction].timeline.push({id:nextTimelineId++,date,title,description,faction:currentFaction});
+}
+document.getElementById('editTimelineModal').classList.remove('active');
+renderTimeline();
+saveAll();
+});
+
+window.editTimelineEvent=function(eventId){
+const event=data[currentFaction].timeline.find(e=>e.id===eventId);
+if(!event)return;
+editingTimeline=event;
+document.getElementById('timelineModalTitle').textContent='✏️ EDIT EVENT';
+document.getElementById('timelineDateInput').value=event.date;
+document.getElementById('timelineTitleInput').value=event.title;
+document.getElementById('timelineDescInput').value=event.description;
+document.getElementById('editTimelineModal').classList.add('active');
+}
+
+window.deleteTimelineEvent=function(eventId){
+if(!confirm('Delete this event?'))return;
+data[currentFaction].timeline=data[currentFaction].timeline.filter(e=>e.id!==eventId);
+renderTimeline();
+saveAll();
+}
+
+// HIERARCHY MANAGEMENT
+document.getElementById('addHierarchyBtn').addEventListener('click',()=>{
+if(!editMode){alert('Please enable Edit Mode first');return}
+document.getElementById('hierarchyModalTitle').textContent='➕ ADD HIERARCHY POSITION';
+document.getElementById('hierarchyLevel').value='1';
+document.getElementById('hierarchyRank').value='';
+document.getElementById('hierarchyName').value='';
+document.getElementById('hierarchyTitle').value='';
+document.getElementById('editHierarchyModal').classList.add('active');
+});
+
+document.getElementById('hierarchyModalCancel').addEventListener('click',()=>{
+document.getElementById('editHierarchyModal').classList.remove('active');
+});
+
+document.getElementById('hierarchyModalSave').addEventListener('click',()=>{
+const level=parseInt(document.getElementById('hierarchyLevel').value);
+const rank=document.getElementById('hierarchyRank').value.trim();
+const name=document.getElementById('hierarchyName').value.trim();
+const title=document.getElementById('hierarchyTitle').value.trim();
+if(!rank||!name||!title){alert('Please fill all fields');return}
+const newPos={id:Date.now(),rank,name,title,level,faction:currentFaction};
+data[currentFaction].hierarchy.push(newPos);
+document.getElementById('editHierarchyModal').classList.remove('active');
+renderHierarchy();
+saveAll();
+});
+
+window.deleteHierarchyPosition=function(posId){
+if(!confirm('Delete this position?'))return;
+data[currentFaction].hierarchy=data[currentFaction].hierarchy.filter(p=>p.id!==posId);
+renderHierarchy();
+saveAll();
+}
+
+// ROLE MANAGEMENT
+document.getElementById('addNewRoleBtn').addEventListener('click',()=>{
+editingRole=null;
+document.getElementById('roleModalTitle').textContent='➕ CREATE NEW ROLE';
+document.getElementById('roleNameInput').value='';
+document.getElementById('roleColorInput').value='#d4af37';
+document.getElementById('editRoleModal').classList.add('active');
+});
+
+document.getElementById('roleModalCancel').addEventListener('click',()=>{
+document.getElementById('editRoleModal').classList.remove('active');
+});
+
+document.getElementById('roleModalSave').addEventListener('click',()=>{
+const name=document.getElementById('roleNameInput').value.trim();
+const color=document.getElementById('roleColorInput').value;
+if(!name){alert('Please enter a role name');return}
+if(editingRole){
+editingRole.name=name;
+editingRole.color=color;
+}else{
+data[currentFaction].roles.push({id:nextRoleId++,name,color,faction:currentFaction});
+}
+document.getElementById('editRoleModal').classList.remove('active');
+renderRoleList();
+renderEras();
+saveAll();
+});
+
+window.editRole=function(roleId){
+const role=data[currentFaction].roles.find(r=>r.id===roleId);
+if(!role)return;
+editingRole=role;
+document.getElementById('roleModalTitle').textContent='✏️ EDIT ROLE';
+document.getElementById('roleNameInput').value=role.name;
+document.getElementById('roleColorInput').value=role.color;
+document.getElementById('editRoleModal').classList.add('active');
+}
+
+window.deleteRole=function(roleId){
+if(!confirm('Delete this role? It will be removed from all members.'))return;
+data[currentFaction].roles=data[currentFaction].roles.filter(r=>r.id!==roleId);
+data[currentFaction].members.forEach(m=>{
+if(m.roleIds)m.roleIds=m.roleIds.filter(rid=>rid!==roleId);
+});
+renderRoleList();
+renderEras();
+saveAll();
+}
+
+function renderRoleList(){
+const container=document.getElementById('roleList');
+const roles=data[currentFaction].roles||[];
+container.innerHTML=roles.map(role=>`
+<div class="role-item">
+<div class="role-info">
+<div class="role-color-preview" style="background-color:${role.color}"></div>
+<span style="font-family:Orbitron;font-weight:700;color:${role.color}">${role.name}</span>
+</div>
+<div class="role-actions">
+<button class="role-action-btn" onclick="editRole(${role.id})">✏️ Edit</button>
+<button class="role-action-btn delete" onclick="deleteRole(${role.id})">🗑️ Delete</button>
+</div>
+</div>
+`).join('');
+}
+
+// ASSIGN ROLES TO MEMBER
+window.openAssignRoles=function(memberId){
+const member=data[currentFaction].members.find(m=>m.id===memberId);
+if(!member)return;
+assigningRolesMember=member;
+document.getElementById('assignMemberName').textContent=member.name;
+
+if(!member.roleIds)member.roleIds=[];
+
+const container=document.getElementById('availableRolesList');
+const roles=data[currentFaction].roles||[];
+container.innerHTML=roles.map(role=>{
+const isAssigned=member.roleIds.includes(role.id);
+return `
+<label style="display:flex;align-items:center;gap:10px;padding:10px;cursor:pointer;border-bottom:1px solid rgba(var(--current-primary-rgb),.2)">
+<input type="checkbox" value="${role.id}" ${isAssigned?'checked':''} style="width:20px;height:20px;cursor:pointer">
+<div style="width:20px;height:20px;border-radius:4px;background-color:${role.color}"></div>
+<span style="color:${role.color};font-weight:700">${role.name}</span>
+</label>
+`;
+}).join('');
+
+document.getElementById('assignRolesModal').classList.add('active');
+}
+
+document.getElementById('assignRolesCancel').addEventListener('click',()=>{
+document.getElementById('assignRolesModal').classList.remove('active');
+assigningRolesMember=null;
+});
+
+document.getElementById('assignRolesSave').addEventListener('click',()=>{
+if(!assigningRolesMember)return;
+const checkboxes=document.querySelectorAll('#availableRolesList input[type="checkbox"]');
+const selectedRoleIds=Array.from(checkboxes).filter(cb=>cb.checked).map(cb=>parseInt(cb.value));
+assigningRolesMember.roleIds=selectedRoleIds;
+document.getElementById('assignRolesModal').classList.remove('active');
+assigningRolesMember=null;
+renderEras();
+saveAll();
+});
+
+function openDetail(member){
+if(editMode)return;
+const modal=document.getElementById('detailModal');
+const left=document.getElementById('detailLeft');
+const bioText=document.getElementById('bioText');
+
+currentAudioPlayer=null;
+
+let imageHTML='';
+if(member.image){
+imageHTML=`<div style="position:relative"><img src="${member.image}" class="detail-image">${member.status==='retired'?'<div class="retired-badge-detail">RETIRED</div>':''}</div>`;
+}else{
+imageHTML=`<div style="position:relative"><div class="detail-image-placeholder">CLASSIFIED IMAGE</div>${member.status==='retired'?'<div class="retired-badge-detail">RETIRED</div>':''}</div>`;
+}
+
+const memberRoles=getMemberRoles(member);
+const rolesHTML=memberRoles.map(role=>{
+const isChamp=isChampionRole(role.name);
+return `<span class="detail-role-badge ${isChamp?'champion':''}" style="color:${role.color};border-color:${role.color};background:${role.color}20">${role.name}</span>`;
+}).join('');
+const tenureText=member.tenureStart||member.tenureEnd?`<div class="detail-tenure">${member.tenureStart||'?'} - ${member.tenureEnd||'Present'}</div>`:'';
+
+const audioHTML=member.audio?`
+<div class="detail-audio-section">
+<div class="detail-audio-header">Audio Log</div>
+<button class="play-audio-btn" id="playAudioBtn">Play Audio Log</button>
+<div class="audio-player-container" id="audioPlayerContainer">
+<audio id="detailAudioPlayer" src="${member.audio}" controls></audio>
+</div>
+</div>`:'';
+
+left.innerHTML=`${imageHTML}<div class="detail-rank">${member.rank}</div><div class="detail-name">${member.name}</div><div class="detail-title">${member.title}</div>${tenureText}<div class="detail-roles-section"><div class="detail-section-header">Security Clearance & Assignments</div><div class="detail-roles-list">${rolesHTML}</div></div>${audioHTML}`;
+
+if(member.audio){
+const playBtn=document.getElementById('playAudioBtn');
+const container=document.getElementById('audioPlayerContainer');
+const audioPlayer=document.getElementById('detailAudioPlayer');
+currentAudioPlayer=audioPlayer;
+playBtn.addEventListener('click',()=>{
+if(container.classList.contains('active')){
+container.classList.remove('active');
+audioPlayer.pause();
+audioPlayer.currentTime=0;
+playBtn.textContent='Play Audio Log';
+playBtn.classList.remove('playing');
+}else{
+container.classList.add('active');
+audioPlayer.play();
+playBtn.textContent='Stop Audio Log';
+playBtn.classList.add('playing');
+}
+});
+audioPlayer.addEventListener('ended',()=>{
+container.classList.remove('active');
+playBtn.textContent='Play Audio Log';
+playBtn.classList.remove('playing');
+});
+}
+
+bioText.textContent='';
+const bio=member.bio||'[Biography data classified or unavailable]';
+typeWriter(bio,bioText,0);
+
+modal.classList.add('active');
+}
+
+function typeWriter(text,element,index){
+if(index<text.length){
+element.textContent+=text.charAt(index);
+setTimeout(()=>typeWriter(text,element,index+1),30);
+}
+}
+
+document.getElementById('detailClose').addEventListener('click',()=>{
+if(currentAudioPlayer){
+currentAudioPlayer.pause();
+currentAudioPlayer.currentTime=0;
+}
+document.getElementById('detailModal').classList.remove('active');
+});
+
+document.getElementById('detailModal').addEventListener('click',e=>{
+if(e.target.id==='detailModal'){
+if(currentAudioPlayer){
+currentAudioPlayer.pause();
+currentAudioPlayer.currentTime=0;
+}
+document.getElementById('detailModal').classList.remove('active');
+}
+});
+
+function getMemberRoles(member){
+if(!member.roleIds||member.roleIds.length===0)return[];
+return member.roleIds.map(roleId=>{
+return data[currentFaction].roles.find(r=>r.id===roleId);
+}).filter(Boolean);
+}
+
+function renderHierarchy(){
+const container=document.getElementById('chartContainer');
+const currentMembers=data[currentFaction].members.filter(m=>m.status==='active');
+const emperor=currentMembers.find(m=>m.rank==='Emperor'||m.rank==='Fleet Commander');
+const level2=currentMembers.filter(m=>m.rank==='Prince'||m.rank==='Captain');
+const level3=currentMembers.filter(m=>m.rank==='High Justice'||m.rank==='Officer');
+
+const hierarchyPositions=data[currentFaction].hierarchy;
+const h1=hierarchyPositions.filter(p=>p.level===1);
+const h2=hierarchyPositions.filter(p=>p.level===2);
+const h3=hierarchyPositions.filter(p=>p.level===3);
+
+const renderNode=(p,isTop)=>`<div class="chart-node ${isTop?'emperor':''}" onclick="alert('Custom hierarchy position')">
+<div class="chart-rank-badge">${p.rank}</div>
+<div class="chart-name">${p.name}</div>
+<div class="chart-title">${p.title}</div>
+${editMode?`<button onclick="event.stopPropagation();deleteHierarchyPosition(${p.id})" style="margin-top:10px;padding:4px 8px;background:rgba(220,38,38,.2);border:2px solid #ff5555;color:#ff5555;border-radius:4px;cursor:pointer;font-family:Orbitron;font-size:.7rem">🗑️</button>`:''}
+</div>`;
+
+const renderMemberNode=(m,hasLine)=>`<div class="chart-node" onclick="openDetailById(${m.id})">
+${hasLine?'<div class="chart-line"></div>':''}
+<div class="chart-rank-badge">${m.rank}</div>
+<div class="chart-name">${m.name}</div>
+<div class="chart-title">${m.title}</div>
+</div>`;
+
+container.innerHTML=`
+<div class="chart-level">
+${emperor?renderMemberNode(emperor,false):''}
+${h1.map(p=>renderNode(p,true)).join('')}
+</div>
+<div class="chart-level">
+${level2.map(p=>renderMemberNode(p,true)).join('')}
+${h2.map(p=>renderNode(p,false)).join('')}
+</div>
+<div class="chart-level">
+${level3.map(p=>renderMemberNode(p,true)).join('')}
+${h3.map(p=>renderNode(p,false)).join('')}
+</div>
+`;
+}
+
+window.openDetailById=function(id){
+const member=data[currentFaction].members.find(m=>m.id===id);
+if(member)openDetail(member);
+}
+
+function renderTimeline(){
+const container=document.getElementById('timelineContainer');
+container.innerHTML=data[currentFaction].timeline.map(e=>`
+<div class="timeline-item">
+<div class="timeline-dot"></div>
+<div class="timeline-content">
+<div class="timeline-date">${e.date}</div>
+<div class="timeline-event-title">${e.title}</div>
+<div class="timeline-event-desc">${e.description}</div>
+<div class="timeline-edit-btns">
+<button class="timeline-btn" onclick="editTimelineEvent(${e.id})">✏️ Edit</button>
+<button class="timeline-btn delete" onclick="deleteTimelineEvent(${e.id})">🗑️ Delete</button>
+</div>
+</div>
+</div>
+`).join('');
+}
+
+function renderEras(){
+const container=document.getElementById('erasContainer');
+container.innerHTML=data[currentFaction].eras.map(era=>{
+const eraMembers=data[currentFaction].members.filter(m=>m.eraId===era.id);
+return `
+<div class="era-section">
+<div class="era-header">
+<div class="era-title">${era.name}</div>
+<div class="era-edit-btns">
+<button class="era-btn" onclick="editEra(${era.id})">✏️ Edit</button>
+<button class="era-btn delete" onclick="deleteEra(${era.id})">🗑️ Delete</button>
+</div>
+</div>
+<div class="members-grid">${eraMembers.map(m=>renderMemberCard(m)).join('')}</div>
+</div>
+`;
+}).join('');
+
+setTimeout(attachEventListeners,100);
+}
+
+function renderMemberCard(m){
+let imageHTML='';
+if(m.image){
+imageHTML=`<div class="image-container"><img src="${m.image}" class="member-image-small">${m.status==='retired'?'<div class="retired-badge-small">RETIRED</div>':''}</div>`;
+}else{
+imageHTML=`<div class="image-container"><div class="image-placeholder-small">CLASSIFIED</div>${m.status==='retired'?'<div class="retired-badge-small">RETIRED</div>':''}</div>`;
+}
+
+// CHECK FOR CHAMPION TITLE
+const memberRoles=getMemberRoles(m);
+const championRole=memberRoles.find(r=>isChampionRole(r.name));
+
+const eraOptions=data[currentFaction].eras.map(e=>`<option value="${e.id}" ${m.eraId===e.id?'selected':''}>${e.name}</option>`).join('');
+
+const rolesHTML=memberRoles.map(r=>`<span class="role-badge" style="color:${r.color};border-color:${r.color};background:${r.color}20" onclick="event.stopPropagation();removeRole(${m.id},${r.id})"><span>${r.name}</span><span class="role-remove">×</span></span>`).join('');
+
+return `
+<div class="member-card${m.status==='retired'?' retired':''}" data-member-id="${m.id}">
+${championRole?`<div class="champion-badge">⭐ ${championRole.name}</div>`:''}
+${editMode?`<button class="delete-member-btn" data-member-id="${m.id}">🗑️</button>`:''}
+${imageHTML}
+<div class="image-upload-zone"><input type="file" accept="image/*" style="display:none" class="image-input" data-member-id="${m.id}"><p>📷 Upload Image</p></div>
+${editMode?`
+<div class="roles-section">
+<div class="roles-list">${rolesHTML}</div>
+<button class="add-role-btn" data-member-id="${m.id}">➕ Assign Roles</button>
+</div>
+<div class="audio-log-section">
+<button class="add-audio-btn" data-member-id="${m.id}">Add Audio Log</button>
+<input type="file" accept="audio/*" style="display:none" class="audio-input" data-member-id="${m.id}">
+${m.audio?`<div class="audio-player-wrapper"><audio controls src="${m.audio}"></audio><button class="delete-audio-btn" data-member-id="${m.id}">🗑️ Remove Audio</button></div>`:''}
+</div>
+<div class="era-select"><label style="font-size:.8rem;color:var(--text-secondary)">Era:</label><select class="era-select-input" data-member-id="${m.id}">${eraOptions}</select></div>
+<div class="status-controls"><label>Status:</label><select class="status-select" data-member-id="${m.id}"><option value="active" ${m.status==='active'?'selected':''}>Active</option><option value="retired" ${m.status==='retired'?'selected':''}>Retired</option></select></div>
+<div class="tenure-inputs"><input type="text" class="tenure-start" data-member-id="${m.id}" placeholder="Start" value="${m.tenureStart||''}"><input type="text" class="tenure-end" data-member-id="${m.id}" placeholder="End" value="${m.tenureEnd||''}"></div>
+`:''}
+<div class="member-rank editable-field" contenteditable="${editMode}" data-member-id="${m.id}" data-field="rank">${m.rank}</div>
+<div class="member-name editable-field" contenteditable="${editMode}" data-member-id="${m.id}" data-field="name">${m.name}</div>
+<div class="member-title editable-field" contenteditable="${editMode}" data-member-id="${m.id}" data-field="title">${m.title}</div>
+${editMode?`<textarea class="bio-edit" data-member-id="${m.id}" style="width:100%;min-height:60px;margin:10px 0;padding:8px;background:rgba(0,0,0,.5);border:2px solid var(--current-primary);border-radius:6px;color:var(--text-primary);font-family:inherit;resize:vertical" placeholder="Add biography...">${m.bio||''}</textarea>`:''}
+</div>
+`;
+}
+
+window.removeRole=function(memberId,roleId){
+const member=data[currentFaction].members.find(m=>m.id===memberId);
+if(!member)return;
+if(!member.roleIds)member.roleIds=[];
+member.roleIds=member.roleIds.filter(rid=>rid!==roleId);
+renderEras();
+saveAll();
+}
+
+function attachEventListeners(){
+document.querySelectorAll('.member-card').forEach(card=>{
+const memberId=parseInt(card.dataset.memberId);
+const member=data[currentFaction].members.find(m=>m.id===memberId);
+if(!member)return;
+
+if(!editMode){
+card.addEventListener('click',()=>openDetail(member));
+}
+
+if(editMode){
+const uploadZone=card.querySelector('.image-upload-zone');
+const imageInput=card.querySelector('.image-input');
+if(uploadZone&&imageInput){
+uploadZone.addEventListener('click',e=>{
+e.stopPropagation();
+imageInput.click();
+});
+imageInput.addEventListener('change',e=>{
+const file=e.target.files[0];
+if(file){
+const reader=new FileReader();
+reader.onload=event=>{
+member.image=event.target.result;
+renderEras();
+saveAll();
+};
+reader.readAsDataURL(file);
+}
+});
+}
+
+const addRoleBtn=card.querySelector('.add-role-btn');
+if(addRoleBtn){
+addRoleBtn.addEventListener('click',e=>{
+e.stopPropagation();
+openAssignRoles(memberId);
+});
+}
+
+const addAudioBtn=card.querySelector('.add-audio-btn');
+const audioInput=card.querySelector('.audio-input');
+if(addAudioBtn&&audioInput){
+addAudioBtn.addEventListener('click',e=>{
+e.stopPropagation();
+audioInput.click();
+});
+audioInput.addEventListener('change',e=>{
+const file=e.target.files[0];
+if(file){
+const reader=new FileReader();
+reader.onload=event=>{
+member.audio=event.target.result;
+renderEras();
+saveAll();
+};
+reader.readAsDataURL(file);
+}
+});
+}
+
+const deleteAudioBtn=card.querySelector('.delete-audio-btn');
+if(deleteAudioBtn){
+deleteAudioBtn.addEventListener('click',e=>{
+e.stopPropagation();
+member.audio=null;
+renderEras();
+saveAll();
+});
+}
+
+const statusSelect=card.querySelector('.status-select');
+if(statusSelect)statusSelect.addEventListener('change',e=>{
+e.stopPropagation();
+member.status=e.target.value;
+renderEras();
+saveAll();
+});
+
+const eraSelect=card.querySelector('.era-select-input');
+if(eraSelect)eraSelect.addEventListener('change',e=>{
+e.stopPropagation();
+member.eraId=parseInt(e.target.value);
+renderEras();
+saveAll();
+});
+
+const tenureStart=card.querySelector('.tenure-start');
+const tenureEnd=card.querySelector('.tenure-end');
+if(tenureStart)tenureStart.addEventListener('input',e=>{member.tenureStart=e.target.value;saveAll()});
+if(tenureEnd)tenureEnd.addEventListener('input',e=>{member.tenureEnd=e.target.value;saveAll()});
+
+const deleteBtn=card.querySelector('.delete-member-btn');
+if(deleteBtn)deleteBtn.addEventListener('click',e=>{
+e.stopPropagation();
+if(confirm(`Delete ${member.name}?`)){
+data[currentFaction].members=data[currentFaction].members.filter(m=>m.id!==member.id);
+renderEras();
+saveAll();
+}
+});
+}
+});
+}
+
+document.getElementById('editBtn').addEventListener('click',()=>{
+editMode?exitEditMode():(document.getElementById('passwordModal').classList.add('active'),document.getElementById('passwordInput').value='',document.getElementById('errorMessage').textContent='',document.getElementById('passwordInput').focus())
+});
+
+document.getElementById('submitBtn').addEventListener('click',checkPassword);
+document.getElementById('passwordInput').addEventListener('keypress',e=>{if(e.key==='Enter')checkPassword()});
+document.getElementById('cancelBtn').addEventListener('click',()=>{document.getElementById('passwordModal').classList.remove('active')});
+
+function checkPassword(){
+const p=document.getElementById('passwordInput').value;
+p===PW?(document.getElementById('passwordModal').classList.remove('active'),enterEditMode()):(document.getElementById('errorMessage').textContent='❌ Access Denied',document.getElementById('passwordInput').value='',document.getElementById('passwordInput').focus())
+}
+
+function enterEditMode(){
+editMode=true;
+document.body.classList.add('edit-mode');
+document.getElementById('editBtn').textContent='🔒 Cancel';
+document.getElementById('editBtn').style.borderColor='#ff5555';
+document.getElementById('editBtn').style.color='#ff5555';
+document.getElementById('saveBtn').style.display='block';
+document.getElementById('addMemberBtn').style.display='block';
+document.getElementById('settingsBtn').style.display='block';
+renderEras();
+renderTimeline();
+renderHierarchy();
+}
+
+function exitEditMode(){
+editMode=false;
+document.body.classList.remove('edit-mode');
+document.getElementById('editBtn').textContent='🔓 Edit Mode';
+document.getElementById('editBtn').style.borderColor='';
+document.getElementById('editBtn').style.color='';
+document.getElementById('saveBtn').style.display='none';
+document.getElementById('addMemberBtn').style.display='none';
+document.getElementById('settingsBtn').style.display='none';
+renderEras();
+renderTimeline();
+renderHierarchy();
+}
+
+document.getElementById('addMemberBtn').addEventListener('click',()=>{
+const firstEraId=data[currentFaction].eras.length>0?data[currentFaction].eras[0].id:1;
+data[currentFaction].members.push({id:nextId++,rank:'New Position',name:'New Member',title:'Click to edit',bio:'Add biography...',tenureStart:'',tenureEnd:'',status:'active',eraId:firstEraId,faction:currentFaction,image:null,audio:null,roleIds:[]});
+renderEras();
+saveAll();
+});
+
+document.getElementById('settingsBtn').addEventListener('click',()=>{
+renderRoleList();
+document.getElementById('settingsModal').classList.add('active');
+});
+document.getElementById('settingsCloseBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('active')});
+
+document.getElementById('saveBtn').addEventListener('click',()=>{
+document.querySelectorAll('.member-card').forEach(card=>{
+const memberId=parseInt(card.dataset.memberId);
+const member=data[currentFaction].members.find(m=>m.id===memberId);
+if(member){
+const rankEl=card.querySelector('[data-field="rank"]');
+const nameEl=card.querySelector('[data-field="name"]');
+const titleEl=card.querySelector('[data-field="title"]');
+const bioEl=card.querySelector('.bio-edit');
+if(rankEl)member.rank=rankEl.textContent;
+if(nameEl)member.name=nameEl.textContent;
+if(titleEl)member.title=titleEl.textContent;
+if(bioEl)member.bio=bioEl.value;
+}
+});
+saveAll();
+exitEditMode();
+alert('✅ Archive updated!');
+});
+
+function saveAll(){
+localStorage.setItem('eternalArchiveData',JSON.stringify(data));
+}
+
+window.addEventListener('load',()=>{
+const savedData=localStorage.getItem('eternalArchiveData');
+if(savedData){
+try{
+const loaded=JSON.parse(savedData);
+if(loaded.empire){
+ensureDataStructure(loaded.empire);
+data.empire=loaded.empire;
+}
+if(loaded.fleet){
+ensureDataStructure(loaded.fleet);
+data.fleet=loaded.fleet;
+}
+nextId=Math.max(...data.empire.members.map(m=>m.id),...data.fleet.members.map(m=>m.id))+1;
+nextEraId=Math.max(...data.empire.eras.map(e=>e.id),...data.fleet.eras.map(e=>e.id))+1;
+nextTimelineId=Math.max(...data.empire.timeline.map(e=>e.id),...data.fleet.timeline.map(e=>e.id))+1;
+const allRoles=[...data.empire.roles,...data.fleet.roles];
+nextRoleId=allRoles.length>0?Math.max(...allRoles.map(r=>r.id))+1:10;
+}catch(e){
+console.error('Error loading data:',e);
+}
+}
+renderEras();
+switchFaction('empire');
+});
+
+renderEras();
+</script>
+</body>
+</html>
