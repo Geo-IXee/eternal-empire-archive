@@ -3,6 +3,10 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Eternal Empire - High Command Archive</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&family=Space+Mono&display=swap" rel="stylesheet">
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
 <style>*{margin:0;padding:0;box-sizing:border-box}:root{--imperial-black:#0a0a0f;--imperial-dark:#121218;--imperial-gold:#d4af37;--imperial-amber:#ffb627;--imperial-blue:#4a9eff;--imperial-silver:#c0c0c0;--imperial-steel:#8a8a8a;--text-primary:#e8e8f0;--text-secondary:#a0a0b8;--color-leadership:#d4af37;--color-military:#ff5555;--color-administrative:#a78bfa;--color-trophy:#ff8c00;--color-alert:#fff;--current-primary:var(--imperial-gold);--current-secondary:var(--imperial-amber)}
 
 /* CUSTOM SCROLLBAR */
@@ -283,12 +287,28 @@ body{font-family:Rajdhani,sans-serif;background:var(--imperial-black);color:var(
 .loading-text{font-family:Orbitron,sans-serif;font-size:1.2rem;color:var(--current-primary);letter-spacing:4px;text-transform:uppercase;animation:pulse 1.5s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
 
-@media (max-width:768px){.archive-title{font-size:2.5rem;letter-spacing:4px}.members-grid{grid-template-columns:1fr}.detail-content{flex-direction:column}.detail-left,.detail-right{border:none;max-height:none}.timeline-content{width:90%}.timeline::before{left:20px}.timeline-dot{left:20px}.edit-controls{bottom:15px;right:15px;gap:10px}.edit-btn,.save-btn,.add-member-btn,.settings-btn{padding:10px 20px;font-size:.8rem}}</style>
+@media (max-width:768px){.archive-title{font-size:2.5rem;letter-spacing:4px}.members-grid{grid-template-columns:1fr}.detail-content{flex-direction:column}.detail-left,.detail-right{border:none;max-height:none}.timeline-content{width:90%}.timeline::before{left:20px}.timeline-dot{left:20px}.edit-controls{bottom:15px;right:15px;gap:10px}.edit-btn,.save-btn,.add-member-btn,.settings-btn{padding:10px 20px;font-size:.8rem}}
+/* SYNC INDICATOR */
+.sync-indicator{position:fixed;top:20px;right:20px;padding:10px 20px;background:rgba(18,18,24,.95);border:2px solid;border-radius:8px;font-family:Orbitron,sans-serif;font-size:.8rem;z-index:9999;display:flex;align-items:center;gap:10px;opacity:0;transition:opacity .3s;pointer-events:none}
+.sync-indicator.visible{opacity:1}
+.sync-indicator.syncing{border-color:#4a9eff;color:#4a9eff}
+.sync-indicator.synced{border-color:#4ade80;color:#4ade80}
+.sync-indicator.error{border-color:#ff5555;color:#ff5555}
+.sync-indicator::before{content:'';width:10px;height:10px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor;animation:syncPulse 1.5s ease-in-out infinite}
+@keyframes syncPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.2)}}
+
+</style>
 </head>
 <body>
 <!-- LOADING SCREEN -->
 <div class="loading-overlay" id="loadingOverlay">
 <div class="loading-spinner"></div>
+
+<!-- SYNC INDICATOR -->
+<div class="sync-indicator" id="syncIndicator">
+<span id="syncText">Connecting...</span>
+</div>
+
 <div class="loading-text">Accessing Archives...</div>
 </div>
 
@@ -454,6 +474,98 @@ body{font-family:Rajdhani,sans-serif;background:var(--imperial-black);color:var(
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+// ========================================
+// FIREBASE CONFIGURATION
+// ========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCsrNwKe5v3TLoMCTd8naw46pI_ddabH1Q",
+  authDomain: "ethernalempire-a7601.firebaseapp.com",
+  databaseURL: "https://ethernalempire-a7601-default-rtdb.firebaseio.com",
+  projectId: "ethernalempire-a7601",
+  storageBucket: "ethernalempire-a7601.firebasestorage.app",
+  messagingSenderId: "124324351692",
+  appId: "1:124324351692:web:a4a514fc0fa9c54cf0fc69"
+};
+
+// Initialize Firebase
+let database, dataRef, isSyncing = false;
+
+function showSync(text, status) {
+  const indicator = document.getElementById('syncIndicator');
+  const textEl = document.getElementById('syncText');
+  if (indicator && textEl) {
+    textEl.textContent = text;
+    indicator.className = 'sync-indicator visible ' + status;
+    setTimeout(function() {
+      if (status === 'synced') indicator.classList.remove('visible');
+    }, 2000);
+  }
+}
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  database = firebase.database();
+  dataRef = database.ref('eternalArchive');
+  console.log('✅ Firebase connected!');
+  showSync('Connected', 'synced');
+} catch (error) {
+  console.error('❌ Firebase error:', error);
+  showSync('Offline Mode', 'error');
+}
+
+function saveToFirebase(dataToSave) {
+  if (!database || isSyncing) return;
+  isSyncing = true;
+  showSync('Syncing...', 'syncing');
+  dataRef.set(dataToSave)
+    .then(function() {
+      console.log('✅ Synced to Firebase');
+      showSync('Synced', 'synced');
+      setTimeout(function() { isSyncing = false; }, 1000);
+    })
+    .catch(function(error) {
+      console.error('❌ Sync failed:', error);
+      showSync('Sync Failed', 'error');
+      setTimeout(function() { isSyncing = false; }, 1000);
+    });
+}
+
+function loadFromFirebase() {
+  if (!database) return Promise.resolve(null);
+  return dataRef.once('value')
+    .then(function(snapshot) {
+      return snapshot.val();
+    })
+    .catch(function(error) {
+      console.error('❌ Load failed:', error);
+      return null;
+    });
+}
+
+function listenToChanges() {
+  if (!database) return;
+  dataRef.on('value', function(snapshot) {
+    if (isSyncing) return;
+    var newData = snapshot.val();
+    if (newData) {
+      isSyncing = true;
+      data = newData;
+      ensureDataStructure(data.empire);
+      ensureDataStructure(data.fleet);
+      renderEras();
+      renderTimeline();
+      renderHierarchy();
+      showSync('Updated', 'synced');
+      setTimeout(function() { isSyncing = false; }, 1000);
+    }
+  });
+}
+
+// ========================================
+// YOUR CODE CONTINUES BELOW
+// ========================================
+
+
 // PARTICLE SYSTEM
 const canvas=document.getElementById('particles');
 const ctx=canvas.getContext('2d');
@@ -517,789 +629,12 @@ initParticles();
 animateParticles();
 
 // LOADING SCREEN
-window.addEventListener('load',()=>{
-setTimeout(()=>{
-document.getElementById('loadingOverlay').classList.add('hidden');
-},1500);
-});
-
-// REST OF JAVASCRIPT
-const PW='LEE';
-let currentFaction='empire';
-let editMode=false;
-let nextId=7;
-let nextEraId=3;
-let nextTimelineId=6;
-let nextRoleId=10;
-let editingEra=null;
-let editingTimeline=null;
-let editingRole=null;
-let currentAudioPlayer=null;
-let assigningRolesMember=null;
-
-// DEFAULT DATA STRUCTURE
-const defaultData={
-empire:{
-eras:[
-{id:1,name:'Current Era (2025-2026)',faction:'empire'},
-{id:2,name:'Previous Era (2024-2025)',faction:'empire'}
-],
-members:[
-{id:1,rank:'Emperor',name:'Tommy (Tomhitsu)',title:'The Eternal Emperor | 1IC',bio:'Tommy, also known as Tomhitsu, founded the Eternal Empire and became its first Emperor. Under his leadership, the Empire grew rapidly and established itself as a dominant force. His vision and strategic mind shaped the foundations of what the Empire stands for today.',tenureStart:'2023',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[1,2]},
-{id:2,rank:'Prince',name:'Arcann',title:'Prince of War | 2IC',bio:'Arcann serves as the Prince of War and Second-in-Command of the Eternal Empire. Known for his tactical brilliance and unwavering loyalty, he has led countless successful campaigns.',tenureStart:'2023',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[3,4,5]},
-{id:3,rank:'Prince',name:'Roku',title:'Prince of the Eternal Empire',bio:'Prince Roku oversees diplomatic affairs and internal governance. His wisdom and measured approach have helped maintain stability within the Empire.',tenureStart:'2024',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[3,6]},
-{id:4,rank:'High Justice',name:'Auren',title:'High Justice',bio:'High Justice Auren commands respect throughout the Empire for dedication to justice and order.',tenureStart:'2024',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[7,8]},
-{id:5,rank:'High Justice',name:'Amazed',title:'High Justice of Affairs',bio:'High Justice Amazed manages the Empire\'s administrative operations with precision and care.',tenureStart:'2024',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[7]},
-{id:6,rank:'High Justice',name:'Joei',title:'High Justice of Leadership',bio:'High Justice Joei provides strategic guidance and mentorship to Empire members.',tenureStart:'2024',tenureEnd:'',status:'active',eraId:1,faction:'empire',image:null,audio:null,roleIds:[7]}
-],
-timeline:[
-{id:1,date:'January 2023',title:'Empire Founded',description:'Tommy establishes the Eternal Empire and becomes its first Emperor.',faction:'empire'},
-{id:2,date:'March 2023',title:'Arcann Promoted',description:'Arcann is promoted to Prince of War and named Second-in-Command.',faction:'empire'}
-],
-hierarchy:[],
-roles:[
-{id:1,name:'Eternal Emperor',color:'#d4af37',faction:'empire'},
-{id:2,name:'Zakuulan',color:'#a78bfa',faction:'empire'},
-{id:3,name:'Prince',color:'#d4af37',faction:'empire'},
-{id:4,name:'War Organizer',color:'#ff5555',faction:'empire'},
-{id:5,name:'Champion of Zakuul',color:'#ffd700',faction:'empire'},
-{id:6,name:'Champion of Astra',color:'#ffd700',faction:'empire'},
-{id:7,name:'High Justice',color:'#d4af37',faction:'empire'},
-{id:8,name:'Champion of Vitara',color:'#ffd700',faction:'empire'}
-]
-},
-fleet:{
-eras:[{id:100,name:'Current Era (2025-2026)',faction:'fleet'}],
-members:[],
-timeline:[],
-hierarchy:[],
-roles:[
-{id:9,name:'Fleet Commander',color:'#c0c0c0',faction:'fleet'}
-]
-}
-};
-
-// Initialize with a deep copy
-let data=JSON.parse(JSON.stringify(defaultData));
-
-// HELPER FUNCTION TO ENSURE DATA STRUCTURE
-function ensureDataStructure(factionData){
-if(!factionData.roles)factionData.roles=[];
-if(!factionData.eras)factionData.eras=[];
-if(!factionData.members)factionData.members=[];
-if(!factionData.timeline)factionData.timeline=[];
-if(!factionData.hierarchy)factionData.hierarchy=[];
-// Ensure all members have roleIds
-factionData.members.forEach(m=>{
-if(!m.roleIds)m.roleIds=[];
-});
-}
-
-function isChampionRole(roleName){
-return roleName.toLowerCase().includes('champion');
-}
-
-function switchFaction(faction){
-if(faction===currentFaction)return;
-
-// TRANSITION EFFECT
-const transition=document.getElementById('factionTransition');
-transition.classList.add('active');
-setTimeout(()=>transition.classList.remove('active'),500);
-
-currentFaction=faction;
-document.querySelectorAll('.faction-btn').forEach(btn=>btn.classList.remove('active'));
-document.querySelector(`.faction-btn.${faction}`).classList.add('active');
-
-// UPDATE TITLE
-document.getElementById('mainTitle').textContent=faction==='empire'?'Eternal Empire':'Eternal Fleet';
-
-if(faction==='fleet'){
-document.documentElement.style.setProperty('--current-primary','var(--imperial-silver)');
-document.documentElement.style.setProperty('--current-secondary','#e0e0e0');
-document.documentElement.style.setProperty('--current-primary-rgb','192,192,192');
-currentColor='rgba(192,192,192';
-}else{
-document.documentElement.style.setProperty('--current-primary','var(--imperial-gold)');
-document.documentElement.style.setProperty('--current-secondary','var(--imperial-amber)');
-document.documentElement.style.setProperty('--current-primary-rgb','212,175,55');
-currentColor='rgba(212,175,55';
-}
-
-renderEras();
-renderTimeline();
-renderHierarchy();
-}
-
-document.querySelectorAll('.nav-tab').forEach(tab=>{
-tab.addEventListener('click',()=>{
-document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-tab.classList.add('active');
-document.getElementById(tab.dataset.tab).classList.add('active');
-if(tab.dataset.tab==='hierarchy')renderHierarchy();
-if(tab.dataset.tab==='timeline')renderTimeline();
-});
-});
-
-// ERA MANAGEMENT
-document.getElementById('addEraBtn').addEventListener('click',()=>{
-editingEra=null;
-document.getElementById('eraModalTitle').textContent='➕ ADD NEW ERA';
-document.getElementById('eraNameInput').value='';
-document.getElementById('editEraModal').classList.add('active');
-});
-
-document.getElementById('eraModalCancel').addEventListener('click',()=>{
-document.getElementById('editEraModal').classList.remove('active');
-});
-
-document.getElementById('eraModalSave').addEventListener('click',()=>{
-const name=document.getElementById('eraNameInput').value.trim();
-if(!name){alert('Please enter an era name');return}
-if(editingEra){
-editingEra.name=name;
-}else{
-data[currentFaction].eras.push({id:nextEraId++,name,faction:currentFaction});
-}
-document.getElementById('editEraModal').classList.remove('active');
-renderEras();
-saveAll();
-});
-
-window.editEra=function(eraId){
-const era=data[currentFaction].eras.find(e=>e.id===eraId);
-if(!era)return;
-editingEra=era;
-document.getElementById('eraModalTitle').textContent='✏️ EDIT ERA';
-document.getElementById('eraNameInput').value=era.name;
-document.getElementById('editEraModal').classList.add('active');
-}
-
-window.deleteEra=function(eraId){
-if(!confirm('Delete this era?'))return;
-data[currentFaction].eras=data[currentFaction].eras.filter(e=>e.id!==eraId);
-const newEraId=data[currentFaction].eras.length>0?data[currentFaction].eras[0].id:null;
-if(newEraId){
-data[currentFaction].members.forEach(m=>{if(m.eraId===eraId)m.eraId=newEraId});
-}
-renderEras();
-saveAll();
-}
-
-// TIMELINE MANAGEMENT
-document.getElementById('addTimelineBtn').addEventListener('click',()=>{
-editingTimeline=null;
-document.getElementById('timelineModalTitle').textContent='➕ ADD TIMELINE EVENT';
-document.getElementById('timelineDateInput').value='';
-document.getElementById('timelineTitleInput').value='';
-document.getElementById('timelineDescInput').value='';
-document.getElementById('editTimelineModal').classList.add('active');
-});
-
-document.getElementById('timelineModalCancel').addEventListener('click',()=>{
-document.getElementById('editTimelineModal').classList.remove('active');
-});
-
-document.getElementById('timelineModalSave').addEventListener('click',()=>{
-const date=document.getElementById('timelineDateInput').value.trim();
-const title=document.getElementById('timelineTitleInput').value.trim();
-const description=document.getElementById('timelineDescInput').value.trim();
-if(!date||!title||!description){alert('Please fill all fields');return}
-if(editingTimeline){
-editingTimeline.date=date;
-editingTimeline.title=title;
-editingTimeline.description=description;
-}else{
-data[currentFaction].timeline.push({id:nextTimelineId++,date,title,description,faction:currentFaction});
-}
-document.getElementById('editTimelineModal').classList.remove('active');
-renderTimeline();
-saveAll();
-});
-
-window.editTimelineEvent=function(eventId){
-const event=data[currentFaction].timeline.find(e=>e.id===eventId);
-if(!event)return;
-editingTimeline=event;
-document.getElementById('timelineModalTitle').textContent='✏️ EDIT EVENT';
-document.getElementById('timelineDateInput').value=event.date;
-document.getElementById('timelineTitleInput').value=event.title;
-document.getElementById('timelineDescInput').value=event.description;
-document.getElementById('editTimelineModal').classList.add('active');
-}
-
-window.deleteTimelineEvent=function(eventId){
-if(!confirm('Delete this event?'))return;
-data[currentFaction].timeline=data[currentFaction].timeline.filter(e=>e.id!==eventId);
-renderTimeline();
-saveAll();
-}
-
-// HIERARCHY MANAGEMENT
-document.getElementById('addHierarchyBtn').addEventListener('click',()=>{
-if(!editMode){alert('Please enable Edit Mode first');return}
-document.getElementById('hierarchyModalTitle').textContent='➕ ADD HIERARCHY POSITION';
-document.getElementById('hierarchyLevel').value='1';
-document.getElementById('hierarchyRank').value='';
-document.getElementById('hierarchyName').value='';
-document.getElementById('hierarchyTitle').value='';
-document.getElementById('editHierarchyModal').classList.add('active');
-});
-
-document.getElementById('hierarchyModalCancel').addEventListener('click',()=>{
-document.getElementById('editHierarchyModal').classList.remove('active');
-});
-
-document.getElementById('hierarchyModalSave').addEventListener('click',()=>{
-const level=parseInt(document.getElementById('hierarchyLevel').value);
-const rank=document.getElementById('hierarchyRank').value.trim();
-const name=document.getElementById('hierarchyName').value.trim();
-const title=document.getElementById('hierarchyTitle').value.trim();
-if(!rank||!name||!title){alert('Please fill all fields');return}
-const newPos={id:Date.now(),rank,name,title,level,faction:currentFaction};
-data[currentFaction].hierarchy.push(newPos);
-document.getElementById('editHierarchyModal').classList.remove('active');
-renderHierarchy();
-saveAll();
-});
-
-window.deleteHierarchyPosition=function(posId){
-if(!confirm('Delete this position?'))return;
-data[currentFaction].hierarchy=data[currentFaction].hierarchy.filter(p=>p.id!==posId);
-renderHierarchy();
-saveAll();
-}
-
-// ROLE MANAGEMENT
-document.getElementById('addNewRoleBtn').addEventListener('click',()=>{
-editingRole=null;
-document.getElementById('roleModalTitle').textContent='➕ CREATE NEW ROLE';
-document.getElementById('roleNameInput').value='';
-document.getElementById('roleColorInput').value='#d4af37';
-document.getElementById('editRoleModal').classList.add('active');
-});
-
-document.getElementById('roleModalCancel').addEventListener('click',()=>{
-document.getElementById('editRoleModal').classList.remove('active');
-});
-
-document.getElementById('roleModalSave').addEventListener('click',()=>{
-const name=document.getElementById('roleNameInput').value.trim();
-const color=document.getElementById('roleColorInput').value;
-if(!name){alert('Please enter a role name');return}
-if(editingRole){
-editingRole.name=name;
-editingRole.color=color;
-}else{
-data[currentFaction].roles.push({id:nextRoleId++,name,color,faction:currentFaction});
-}
-document.getElementById('editRoleModal').classList.remove('active');
-renderRoleList();
-renderEras();
-saveAll();
-});
-
-window.editRole=function(roleId){
-const role=data[currentFaction].roles.find(r=>r.id===roleId);
-if(!role)return;
-editingRole=role;
-document.getElementById('roleModalTitle').textContent='✏️ EDIT ROLE';
-document.getElementById('roleNameInput').value=role.name;
-document.getElementById('roleColorInput').value=role.color;
-document.getElementById('editRoleModal').classList.add('active');
-}
-
-window.deleteRole=function(roleId){
-if(!confirm('Delete this role? It will be removed from all members.'))return;
-data[currentFaction].roles=data[currentFaction].roles.filter(r=>r.id!==roleId);
-data[currentFaction].members.forEach(m=>{
-if(m.roleIds)m.roleIds=m.roleIds.filter(rid=>rid!==roleId);
-});
-renderRoleList();
-renderEras();
-saveAll();
-}
-
-function renderRoleList(){
-const container=document.getElementById('roleList');
-const roles=data[currentFaction].roles||[];
-container.innerHTML=roles.map(role=>`
-<div class="role-item">
-<div class="role-info">
-<div class="role-color-preview" style="background-color:${role.color}"></div>
-<span style="font-family:Orbitron;font-weight:700;color:${role.color}">${role.name}</span>
-</div>
-<div class="role-actions">
-<button class="role-action-btn" onclick="editRole(${role.id})">✏️ Edit</button>
-<button class="role-action-btn delete" onclick="deleteRole(${role.id})">🗑️ Delete</button>
-</div>
-</div>
-`).join('');
-}
-
-// ASSIGN ROLES TO MEMBER
-window.openAssignRoles=function(memberId){
-const member=data[currentFaction].members.find(m=>m.id===memberId);
-if(!member)return;
-assigningRolesMember=member;
-document.getElementById('assignMemberName').textContent=member.name;
-
-if(!member.roleIds)member.roleIds=[];
-
-const container=document.getElementById('availableRolesList');
-const roles=data[currentFaction].roles||[];
-container.innerHTML=roles.map(role=>{
-const isAssigned=member.roleIds.includes(role.id);
-return `
-<label style="display:flex;align-items:center;gap:10px;padding:10px;cursor:pointer;border-bottom:1px solid rgba(var(--current-primary-rgb),.2)">
-<input type="checkbox" value="${role.id}" ${isAssigned?'checked':''} style="width:20px;height:20px;cursor:pointer">
-<div style="width:20px;height:20px;border-radius:4px;background-color:${role.color}"></div>
-<span style="color:${role.color};font-weight:700">${role.name}</span>
-</label>
-`;
-}).join('');
-
-document.getElementById('assignRolesModal').classList.add('active');
-}
-
-document.getElementById('assignRolesCancel').addEventListener('click',()=>{
-document.getElementById('assignRolesModal').classList.remove('active');
-assigningRolesMember=null;
-});
-
-document.getElementById('assignRolesSave').addEventListener('click',()=>{
-if(!assigningRolesMember)return;
-const checkboxes=document.querySelectorAll('#availableRolesList input[type="checkbox"]');
-const selectedRoleIds=Array.from(checkboxes).filter(cb=>cb.checked).map(cb=>parseInt(cb.value));
-assigningRolesMember.roleIds=selectedRoleIds;
-document.getElementById('assignRolesModal').classList.remove('active');
-assigningRolesMember=null;
-renderEras();
-saveAll();
-});
-
-function openDetail(member){
-if(editMode)return;
-const modal=document.getElementById('detailModal');
-const left=document.getElementById('detailLeft');
-const bioText=document.getElementById('bioText');
-
-currentAudioPlayer=null;
-
-let imageHTML='';
-if(member.image){
-imageHTML=`<div style="position:relative"><img src="${member.image}" class="detail-image">${member.status==='retired'?'<div class="retired-badge-detail">RETIRED</div>':''}</div>`;
-}else{
-imageHTML=`<div style="position:relative"><div class="detail-image-placeholder">CLASSIFIED IMAGE</div>${member.status==='retired'?'<div class="retired-badge-detail">RETIRED</div>':''}</div>`;
-}
-
-const memberRoles=getMemberRoles(member);
-const rolesHTML=memberRoles.map(role=>{
-const isChamp=isChampionRole(role.name);
-return `<span class="detail-role-badge ${isChamp?'champion':''}" style="color:${role.color};border-color:${role.color};background:${role.color}20">${role.name}</span>`;
-}).join('');
-const tenureText=member.tenureStart||member.tenureEnd?`<div class="detail-tenure">${member.tenureStart||'?'} - ${member.tenureEnd||'Present'}</div>`:'';
-
-const audioHTML=member.audio?`
-<div class="detail-audio-section">
-<div class="detail-audio-header">Audio Log</div>
-<button class="play-audio-btn" id="playAudioBtn">Play Audio Log</button>
-<div class="audio-player-container" id="audioPlayerContainer">
-<audio id="detailAudioPlayer" src="${member.audio}" controls></audio>
-</div>
-</div>`:'';
-
-left.innerHTML=`${imageHTML}<div class="detail-rank">${member.rank}</div><div class="detail-name">${member.name}</div><div class="detail-title">${member.title}</div>${tenureText}<div class="detail-roles-section"><div class="detail-section-header">Security Clearance & Assignments</div><div class="detail-roles-list">${rolesHTML}</div></div>${audioHTML}`;
-
-if(member.audio){
-const playBtn=document.getElementById('playAudioBtn');
-const container=document.getElementById('audioPlayerContainer');
-const audioPlayer=document.getElementById('detailAudioPlayer');
-currentAudioPlayer=audioPlayer;
-playBtn.addEventListener('click',()=>{
-if(container.classList.contains('active')){
-container.classList.remove('active');
-audioPlayer.pause();
-audioPlayer.currentTime=0;
-playBtn.textContent='Play Audio Log';
-playBtn.classList.remove('playing');
-}else{
-container.classList.add('active');
-audioPlayer.play();
-playBtn.textContent='Stop Audio Log';
-playBtn.classList.add('playing');
-}
-});
-audioPlayer.addEventListener('ended',()=>{
-container.classList.remove('active');
-playBtn.textContent='Play Audio Log';
-playBtn.classList.remove('playing');
-});
-}
-
-bioText.textContent='';
-const bio=member.bio||'[Biography data classified or unavailable]';
-typeWriter(bio,bioText,0);
-
-modal.classList.add('active');
-}
-
-function typeWriter(text,element,index){
-if(index<text.length){
-element.textContent+=text.charAt(index);
-setTimeout(()=>typeWriter(text,element,index+1),30);
-}
-}
-
-document.getElementById('detailClose').addEventListener('click',()=>{
-if(currentAudioPlayer){
-currentAudioPlayer.pause();
-currentAudioPlayer.currentTime=0;
-}
-document.getElementById('detailModal').classList.remove('active');
-});
-
-document.getElementById('detailModal').addEventListener('click',e=>{
-if(e.target.id==='detailModal'){
-if(currentAudioPlayer){
-currentAudioPlayer.pause();
-currentAudioPlayer.currentTime=0;
-}
-document.getElementById('detailModal').classList.remove('active');
-}
-});
-
-function getMemberRoles(member){
-if(!member.roleIds||member.roleIds.length===0)return[];
-return member.roleIds.map(roleId=>{
-return data[currentFaction].roles.find(r=>r.id===roleId);
-}).filter(Boolean);
-}
-
-function renderHierarchy(){
-const container=document.getElementById('chartContainer');
-const currentMembers=data[currentFaction].members.filter(m=>m.status==='active');
-const emperor=currentMembers.find(m=>m.rank==='Emperor'||m.rank==='Fleet Commander');
-const level2=currentMembers.filter(m=>m.rank==='Prince'||m.rank==='Captain');
-const level3=currentMembers.filter(m=>m.rank==='High Justice'||m.rank==='Officer');
-
-const hierarchyPositions=data[currentFaction].hierarchy;
-const h1=hierarchyPositions.filter(p=>p.level===1);
-const h2=hierarchyPositions.filter(p=>p.level===2);
-const h3=hierarchyPositions.filter(p=>p.level===3);
-
-const renderNode=(p,isTop)=>`<div class="chart-node ${isTop?'emperor':''}" onclick="alert('Custom hierarchy position')">
-<div class="chart-rank-badge">${p.rank}</div>
-<div class="chart-name">${p.name}</div>
-<div class="chart-title">${p.title}</div>
-${editMode?`<button onclick="event.stopPropagation();deleteHierarchyPosition(${p.id})" style="margin-top:10px;padding:4px 8px;background:rgba(220,38,38,.2);border:2px solid #ff5555;color:#ff5555;border-radius:4px;cursor:pointer;font-family:Orbitron;font-size:.7rem">🗑️</button>`:''}
-</div>`;
-
-const renderMemberNode=(m,hasLine)=>`<div class="chart-node" onclick="openDetailById(${m.id})">
-${hasLine?'<div class="chart-line"></div>':''}
-<div class="chart-rank-badge">${m.rank}</div>
-<div class="chart-name">${m.name}</div>
-<div class="chart-title">${m.title}</div>
-</div>`;
-
-container.innerHTML=`
-<div class="chart-level">
-${emperor?renderMemberNode(emperor,false):''}
-${h1.map(p=>renderNode(p,true)).join('')}
-</div>
-<div class="chart-level">
-${level2.map(p=>renderMemberNode(p,true)).join('')}
-${h2.map(p=>renderNode(p,false)).join('')}
-</div>
-<div class="chart-level">
-${level3.map(p=>renderMemberNode(p,true)).join('')}
-${h3.map(p=>renderNode(p,false)).join('')}
-</div>
-`;
-}
-
-window.openDetailById=function(id){
-const member=data[currentFaction].members.find(m=>m.id===id);
-if(member)openDetail(member);
-}
-
-function renderTimeline(){
-const container=document.getElementById('timelineContainer');
-container.innerHTML=data[currentFaction].timeline.map(e=>`
-<div class="timeline-item">
-<div class="timeline-dot"></div>
-<div class="timeline-content">
-<div class="timeline-date">${e.date}</div>
-<div class="timeline-event-title">${e.title}</div>
-<div class="timeline-event-desc">${e.description}</div>
-<div class="timeline-edit-btns">
-<button class="timeline-btn" onclick="editTimelineEvent(${e.id})">✏️ Edit</button>
-<button class="timeline-btn delete" onclick="deleteTimelineEvent(${e.id})">🗑️ Delete</button>
-</div>
-</div>
-</div>
-`).join('');
-}
-
-function renderEras(){
-const container=document.getElementById('erasContainer');
-container.innerHTML=data[currentFaction].eras.map(era=>{
-const eraMembers=data[currentFaction].members.filter(m=>m.eraId===era.id);
-return `
-<div class="era-section">
-<div class="era-header">
-<div class="era-title">${era.name}</div>
-<div class="era-edit-btns">
-<button class="era-btn" onclick="editEra(${era.id})">✏️ Edit</button>
-<button class="era-btn delete" onclick="deleteEra(${era.id})">🗑️ Delete</button>
-</div>
-</div>
-<div class="members-grid">${eraMembers.map(m=>renderMemberCard(m)).join('')}</div>
-</div>
-`;
-}).join('');
-
-setTimeout(attachEventListeners,100);
-}
-
-function renderMemberCard(m){
-let imageHTML='';
-if(m.image){
-imageHTML=`<div class="image-container"><img src="${m.image}" class="member-image-small">${m.status==='retired'?'<div class="retired-badge-small">RETIRED</div>':''}</div>`;
-}else{
-imageHTML=`<div class="image-container"><div class="image-placeholder-small">CLASSIFIED</div>${m.status==='retired'?'<div class="retired-badge-small">RETIRED</div>':''}</div>`;
-}
-
-// CHECK FOR CHAMPION TITLE
-const memberRoles=getMemberRoles(m);
-const championRole=memberRoles.find(r=>isChampionRole(r.name));
-
-const eraOptions=data[currentFaction].eras.map(e=>`<option value="${e.id}" ${m.eraId===e.id?'selected':''}>${e.name}</option>`).join('');
-
-const rolesHTML=memberRoles.map(r=>`<span class="role-badge" style="color:${r.color};border-color:${r.color};background:${r.color}20" onclick="event.stopPropagation();removeRole(${m.id},${r.id})"><span>${r.name}</span><span class="role-remove">×</span></span>`).join('');
-
-return `
-<div class="member-card${m.status==='retired'?' retired':''}" data-member-id="${m.id}">
-${championRole?`<div class="champion-badge">⭐ ${championRole.name}</div>`:''}
-${editMode?`<button class="delete-member-btn" data-member-id="${m.id}">🗑️</button>`:''}
-${imageHTML}
-<div class="image-upload-zone"><input type="file" accept="image/*" style="display:none" class="image-input" data-member-id="${m.id}"><p>📷 Upload Image</p></div>
-${editMode?`
-<div class="roles-section">
-<div class="roles-list">${rolesHTML}</div>
-<button class="add-role-btn" data-member-id="${m.id}">➕ Assign Roles</button>
-</div>
-<div class="audio-log-section">
-<button class="add-audio-btn" data-member-id="${m.id}">Add Audio Log</button>
-<input type="file" accept="audio/*" style="display:none" class="audio-input" data-member-id="${m.id}">
-${m.audio?`<div class="audio-player-wrapper"><audio controls src="${m.audio}"></audio><button class="delete-audio-btn" data-member-id="${m.id}">🗑️ Remove Audio</button></div>`:''}
-</div>
-<div class="era-select"><label style="font-size:.8rem;color:var(--text-secondary)">Era:</label><select class="era-select-input" data-member-id="${m.id}">${eraOptions}</select></div>
-<div class="status-controls"><label>Status:</label><select class="status-select" data-member-id="${m.id}"><option value="active" ${m.status==='active'?'selected':''}>Active</option><option value="retired" ${m.status==='retired'?'selected':''}>Retired</option></select></div>
-<div class="tenure-inputs"><input type="text" class="tenure-start" data-member-id="${m.id}" placeholder="Start" value="${m.tenureStart||''}"><input type="text" class="tenure-end" data-member-id="${m.id}" placeholder="End" value="${m.tenureEnd||''}"></div>
-`:''}
-<div class="member-rank editable-field" contenteditable="${editMode}" data-member-id="${m.id}" data-field="rank">${m.rank}</div>
-<div class="member-name editable-field" contenteditable="${editMode}" data-member-id="${m.id}" data-field="name">${m.name}</div>
-<div class="member-title editable-field" contenteditable="${editMode}" data-member-id="${m.id}" data-field="title">${m.title}</div>
-${editMode?`<textarea class="bio-edit" data-member-id="${m.id}" style="width:100%;min-height:60px;margin:10px 0;padding:8px;background:rgba(0,0,0,.5);border:2px solid var(--current-primary);border-radius:6px;color:var(--text-primary);font-family:inherit;resize:vertical" placeholder="Add biography...">${m.bio||''}</textarea>`:''}
-</div>
-`;
-}
-
-window.removeRole=function(memberId,roleId){
-const member=data[currentFaction].members.find(m=>m.id===memberId);
-if(!member)return;
-if(!member.roleIds)member.roleIds=[];
-member.roleIds=member.roleIds.filter(rid=>rid!==roleId);
-renderEras();
-saveAll();
-}
-
-function attachEventListeners(){
-document.querySelectorAll('.member-card').forEach(card=>{
-const memberId=parseInt(card.dataset.memberId);
-const member=data[currentFaction].members.find(m=>m.id===memberId);
-if(!member)return;
-
-if(!editMode){
-card.addEventListener('click',()=>openDetail(member));
-}
-
-if(editMode){
-const uploadZone=card.querySelector('.image-upload-zone');
-const imageInput=card.querySelector('.image-input');
-if(uploadZone&&imageInput){
-uploadZone.addEventListener('click',e=>{
-e.stopPropagation();
-imageInput.click();
-});
-imageInput.addEventListener('change',e=>{
-const file=e.target.files[0];
-if(file){
-const reader=new FileReader();
-reader.onload=event=>{
-member.image=event.target.result;
-renderEras();
-saveAll();
-};
-reader.readAsDataURL(file);
-}
-});
-}
-
-const addRoleBtn=card.querySelector('.add-role-btn');
-if(addRoleBtn){
-addRoleBtn.addEventListener('click',e=>{
-e.stopPropagation();
-openAssignRoles(memberId);
-});
-}
-
-const addAudioBtn=card.querySelector('.add-audio-btn');
-const audioInput=card.querySelector('.audio-input');
-if(addAudioBtn&&audioInput){
-addAudioBtn.addEventListener('click',e=>{
-e.stopPropagation();
-audioInput.click();
-});
-audioInput.addEventListener('change',e=>{
-const file=e.target.files[0];
-if(file){
-const reader=new FileReader();
-reader.onload=event=>{
-member.audio=event.target.result;
-renderEras();
-saveAll();
-};
-reader.readAsDataURL(file);
-}
-});
-}
-
-const deleteAudioBtn=card.querySelector('.delete-audio-btn');
-if(deleteAudioBtn){
-deleteAudioBtn.addEventListener('click',e=>{
-e.stopPropagation();
-member.audio=null;
-renderEras();
-saveAll();
-});
-}
-
-const statusSelect=card.querySelector('.status-select');
-if(statusSelect)statusSelect.addEventListener('change',e=>{
-e.stopPropagation();
-member.status=e.target.value;
-renderEras();
-saveAll();
-});
-
-const eraSelect=card.querySelector('.era-select-input');
-if(eraSelect)eraSelect.addEventListener('change',e=>{
-e.stopPropagation();
-member.eraId=parseInt(e.target.value);
-renderEras();
-saveAll();
-});
-
-const tenureStart=card.querySelector('.tenure-start');
-const tenureEnd=card.querySelector('.tenure-end');
-if(tenureStart)tenureStart.addEventListener('input',e=>{member.tenureStart=e.target.value;saveAll()});
-if(tenureEnd)tenureEnd.addEventListener('input',e=>{member.tenureEnd=e.target.value;saveAll()});
-
-const deleteBtn=card.querySelector('.delete-member-btn');
-if(deleteBtn)deleteBtn.addEventListener('click',e=>{
-e.stopPropagation();
-if(confirm(`Delete ${member.name}?`)){
-data[currentFaction].members=data[currentFaction].members.filter(m=>m.id!==member.id);
-renderEras();
-saveAll();
-}
-});
-}
-});
-}
-
-document.getElementById('editBtn').addEventListener('click',()=>{
-editMode?exitEditMode():(document.getElementById('passwordModal').classList.add('active'),document.getElementById('passwordInput').value='',document.getElementById('errorMessage').textContent='',document.getElementById('passwordInput').focus())
-});
-
-document.getElementById('submitBtn').addEventListener('click',checkPassword);
-document.getElementById('passwordInput').addEventListener('keypress',e=>{if(e.key==='Enter')checkPassword()});
-document.getElementById('cancelBtn').addEventListener('click',()=>{document.getElementById('passwordModal').classList.remove('active')});
-
-function checkPassword(){
-const p=document.getElementById('passwordInput').value;
-p===PW?(document.getElementById('passwordModal').classList.remove('active'),enterEditMode()):(document.getElementById('errorMessage').textContent='❌ Access Denied',document.getElementById('passwordInput').value='',document.getElementById('passwordInput').focus())
-}
-
-function enterEditMode(){
-editMode=true;
-document.body.classList.add('edit-mode');
-document.getElementById('editBtn').textContent='🔒 Cancel';
-document.getElementById('editBtn').style.borderColor='#ff5555';
-document.getElementById('editBtn').style.color='#ff5555';
-document.getElementById('saveBtn').style.display='block';
-document.getElementById('addMemberBtn').style.display='block';
-document.getElementById('settingsBtn').style.display='block';
-renderEras();
-renderTimeline();
-renderHierarchy();
-}
-
-function exitEditMode(){
-editMode=false;
-document.body.classList.remove('edit-mode');
-document.getElementById('editBtn').textContent='🔓 Edit Mode';
-document.getElementById('editBtn').style.borderColor='';
-document.getElementById('editBtn').style.color='';
-document.getElementById('saveBtn').style.display='none';
-document.getElementById('addMemberBtn').style.display='none';
-document.getElementById('settingsBtn').style.display='none';
-renderEras();
-renderTimeline();
-renderHierarchy();
-}
-
-document.getElementById('addMemberBtn').addEventListener('click',()=>{
-const firstEraId=data[currentFaction].eras.length>0?data[currentFaction].eras[0].id:1;
-data[currentFaction].members.push({id:nextId++,rank:'New Position',name:'New Member',title:'Click to edit',bio:'Add biography...',tenureStart:'',tenureEnd:'',status:'active',eraId:firstEraId,faction:currentFaction,image:null,audio:null,roleIds:[]});
-renderEras();
-saveAll();
-});
-
-document.getElementById('settingsBtn').addEventListener('click',()=>{
-renderRoleList();
-document.getElementById('settingsModal').classList.add('active');
-});
-document.getElementById('settingsCloseBtn').addEventListener('click',()=>{document.getElementById('settingsModal').classList.remove('active')});
-
-document.getElementById('saveBtn').addEventListener('click',()=>{
-document.querySelectorAll('.member-card').forEach(card=>{
-const memberId=parseInt(card.dataset.memberId);
-const member=data[currentFaction].members.find(m=>m.id===memberId);
-if(member){
-const rankEl=card.querySelector('[data-field="rank"]');
-const nameEl=card.querySelector('[data-field="name"]');
-const titleEl=card.querySelector('[data-field="title"]');
-const bioEl=card.querySelector('.bio-edit');
-if(rankEl)member.rank=rankEl.textContent;
-if(nameEl)member.name=nameEl.textContent;
-if(titleEl)member.title=titleEl.textContent;
-if(bioEl)member.bio=bioEl.value;
-}
-});
-saveAll();
-exitEditMode();
-alert('✅ Archive updated!');
-});
-
-function saveAll(){
-localStorage.setItem('eternalArchiveData',JSON.stringify(data));
-}
-
-window.addEventListener('load',()=>{
+window.addEventListener('load',async function(){
+const firebaseData = await loadFromFirebase();
+if(firebaseData){
+data = firebaseData;
+console.log('✅ Loaded from Firebase');
+} else {
 const savedData=localStorage.getItem('eternalArchiveData');
 if(savedData){
 try{
@@ -1312,17 +647,22 @@ if(loaded.fleet){
 ensureDataStructure(loaded.fleet);
 data.fleet=loaded.fleet;
 }
+console.log('✅ Loaded from localStorage');
+}catch(e){
+console.error('Error loading data:',e);
+}
+}
+}
+ensureDataStructure(data.empire);
+ensureDataStructure(data.fleet);
 nextId=Math.max(...data.empire.members.map(m=>m.id),...data.fleet.members.map(m=>m.id))+1;
 nextEraId=Math.max(...data.empire.eras.map(e=>e.id),...data.fleet.eras.map(e=>e.id))+1;
 nextTimelineId=Math.max(...data.empire.timeline.map(e=>e.id),...data.fleet.timeline.map(e=>e.id))+1;
 const allRoles=[...data.empire.roles,...data.fleet.roles];
 nextRoleId=allRoles.length>0?Math.max(...allRoles.map(r=>r.id))+1:10;
-}catch(e){
-console.error('Error loading data:',e);
-}
-}
 renderEras();
 switchFaction('empire');
+listenToChanges();
 });
 
 renderEras();
